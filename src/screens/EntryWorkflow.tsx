@@ -103,25 +103,7 @@ const useSaleList = () => {
     [firebase],
   )
 
-  return {
-    sales,
-    lookup,
-    reloadSales,
-    isComplete,
-    salesCount: {
-      loaded: sales.length,
-      total: ids.length,
-    },
-  }
-}
-
-const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
-  const { sales, reloadSales, salesCount, isComplete } = useSaleList()
-  const [focus, setFocus] = useState("toEnter")
-
-  const progress = Math.ceil((salesCount.loaded / salesCount.total) * 100)
-
-  const [toAuthorize, toEnter] = useMemo(() => {
+  const [salesToAuthorize, salesToEnter] = useMemo(() => {
     let toAuthorize = []
     let toEnter = []
     for (const sale of sales) {
@@ -136,7 +118,76 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
     return [toAuthorize, toEnter]
   }, [sales])
 
+  return {
+    sales,
+    salesToAuthorize,
+    salesToEnter,
+    lookup,
+    reloadSales,
+    isComplete,
+    salesCount: {
+      loaded: sales.length,
+      total: ids.length,
+    },
+  }
+}
+
+const Header = ({ salesCount, reloadSales, navigate, location }) => {
+  const progress = Math.ceil((salesCount.loaded / salesCount.total) * 100)
   const isLoading = salesCount.total > 0 && salesCount.loaded < salesCount.total
+  return (
+    <Flex
+      as="header"
+      flexDirection="row"
+      alignItems="center"
+      justifyContent={isLoading ? "center" : "flex-end"}
+      bg="blue.50"
+      borderBottomColor="blue.100"
+      borderBottomWidth={1}
+      py={2}
+    >
+      {isLoading ? (
+        <>
+          <Box width={[1, 0.5]} px={8} opacity={0.8}>
+            <Progress hasStripe isAnimated value={progress} borderRadius={4} />
+          </Box>
+          <Text color="blue.500">
+            {salesCount.loaded}/{salesCount.total}
+          </Text>
+        </>
+      ) : (
+        <IconButton
+          onClick={() =>
+            reloadSales()
+              .then(() => navigate(location.pathname))
+              .catch(() => {})
+          }
+          py={1}
+          aria-label="Sync"
+          icon="repeat-clock"
+          variant="link"
+          color="blue.300"
+          variantColor="blue"
+        />
+      )}
+      {/* <Link to="/settings">
+          <Button variant="link" variantColor="blue">
+            <Icon aria-label="Settings Page" name="settings" />
+          </Button>
+        </Link> */}
+    </Flex>
+  )
+}
+
+const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
+  const [focus, setFocus] = useState("toEnter")
+  const {
+    isComplete,
+    reloadSales,
+    salesCount,
+    salesToAuthorize,
+    salesToEnter,
+  } = useSaleList()
 
   return !isComplete && salesCount.total === 0 ? (
     <Box mt={16} textAlign="center">
@@ -144,80 +195,46 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
     </Box>
   ) : (
     <Stack flexDirection="column">
-      <Flex
-        flexDirection="row"
-        alignItems="center"
-        justifyContent={isLoading ? "center" : "flex-end"}
-        bg="blue.50"
-        borderBottomColor="blue.100"
-        borderBottomWidth={1}
-        py={2}
-      >
-        {isLoading ? (
-          <>
-            <Box width={[1, 0.5]} px={8} opacity={0.8}>
-              <Progress
-                hasStripe
-                isAnimated
-                value={progress}
-                borderRadius={4}
-              />
-            </Box>
-            <Text color="blue.500">
-              {salesCount.loaded}/{salesCount.total}
-            </Text>
-          </>
-        ) : (
-          <IconButton
-            onClick={() =>
-              reloadSales()
-                .then(() => navigate(location.pathname))
-                .catch(() => {})
-            }
-            aria-label="Sync"
-            icon="repeat-clock"
-            variant="link"
-            color="blue.300"
-            variantColor="blue"
-          />
-        )}
-        {/* <Link to="/settings">
-          <Button variant="link" variantColor="blue">
-            <Icon aria-label="Settings Page" name="settings" />
-          </Button>
-        </Link> */}
-      </Flex>
+      <Header
+        salesCount={salesCount}
+        reloadSales={reloadSales}
+        navigate={navigate}
+        location={location}
+      />
       <Stack
         mt={4}
         flexDirection={["column", "column", "row"]}
         alignItems={["center", "center", "flex-start"]}
       >
         <Box
-          position="sticky"
+          position={["static", "static", "sticky"]}
+          top={4}
           width={["100%", 4 / 5, 1 / 2]}
           mr={[0, "auto", 4]}
           ml="auto"
+          pb={[0, 0, 8]}
           opacity={focus === "toEnter" ? 1 : 0.4}
           onClick={() => setFocus("toEnter")}
         >
           <Heading color="blue.800" mb={4}>
             To Enter
           </Heading>
-          {toEnter.map(sale => (
+          {salesToEnter.map(sale => (
             <EntryCard key={sale.id} sale={sale} />
           ))}
         </Box>
         <Box
-          position="sticky"
-          top={0}
+          position={["static", "static", "sticky"]}
+          top={4}
           ml={[0, "auto", 4]}
           mr="auto"
           mt={[8, 8, 0]}
+          pb={[0, 0, 8]}
           width={["100%", 4 / 5, 1 / 2]}
           opacity={focus === "toAuthorize" ? 1 : 0.4}
           onClick={() => setFocus("toAuthorize")}
         >
-          {toAuthorize.length > 0 && (
+          {salesToAuthorize.length > 0 && (
             <>
               <Flex flexDirection="row" alignItems="center">
                 <Heading color="blue.800">To Authorize</Heading>
@@ -225,7 +242,7 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
                   aria-label="Mark all entered orders as authorized"
                   icon="check"
                   onClick={() =>
-                    toAuthorize.forEach(Dear.Sale.Actions.markAuthorized)
+                    salesToAuthorize.forEach(Dear.Sale.Actions.markAuthorized)
                   }
                   variant="outline"
                   variantColor="green"
@@ -233,7 +250,7 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
                   ml="auto"
                 />
               </Flex>
-              {toAuthorize.map(sale => (
+              {salesToAuthorize.map(sale => (
                 <AuthorizeCard key={sale.id} sale={sale} />
               ))}
             </>

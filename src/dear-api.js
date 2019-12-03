@@ -81,7 +81,7 @@ export class Sale extends APIResponseWrapper {
   }
 
   get url() {
-    return `https://inventory.dearsystems.com/sale#${this.SaleID || this.ID}`
+    return `https://inventory.dearsystems.com/sale#${this.id}`
   }
 
   get isEntered() {

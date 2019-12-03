@@ -16,7 +16,7 @@ const AuthorizeCard = ({ sale, ...props }) => (
         <>
           <Stack
             direction="row"
-            bg={isFocused ? "white" : "blue.50"}
+            bg="white"
             borderRadius={8}
             px={4}
             py={2}

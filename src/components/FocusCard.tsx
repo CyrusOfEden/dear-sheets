@@ -10,9 +10,9 @@ const FocusCard = ({ children, ...props }) => {
       align=""
       my={4}
       borderRadius={8}
-      {...props}
       color={focused ? "blue.800" : "blue.400"}
       bg={focused ? "white" : "blue.50"}
+      {...props}
       borderColor={focused ? "blue.700" : "blue.50"}
       borderWidth={2}
       onMouseOver={() => setFocused(true)}

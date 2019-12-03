@@ -12,8 +12,6 @@ import {
   firebaseReducer,
 } from "react-redux-firebase"
 
-import { entryReducer } from "./reducers/entryReducer"
-
 const firebaseConfig = {
   apiKey: "AIzaSyD-aLKbxWITKXH4TXSCOpOs8fbwuIOz6Oc",
   authDomain: "newagent-udykrx.firebaseapp.com",
@@ -28,10 +26,7 @@ if (firebase.apps.length === 0) {
   firebase.initializeApp(firebaseConfig)
 }
 
-const rootReducer = combineReducers({
-  firebase: firebaseReducer,
-  entryWorkflow: entryReducer,
-})
+const rootReducer = combineReducers({ firebase: firebaseReducer })
 
 const initialState = {}
 const store = createStore(
