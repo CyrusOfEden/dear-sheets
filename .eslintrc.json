@@ -1,0 +1,23 @@
+{
+  "extends": "react-app",
+  "plugins": [
+    "babel"
+  ],
+  "rules": {
+    "no-unused-expressions": "off",
+    "no-unused-vars": [
+      "warn",
+      {
+        "varsIgnorePattern": "^_",
+        "argsIgnorePattern": "^_"
+      }
+    ],
+    "babel/no-unused-expressions": "warn",
+    "babel/camelcase": [
+      "warn",
+      {
+        "ignoreDestructuring": true
+      }
+    ]
+  }
+}

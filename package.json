@@ -3,13 +3,28 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@chakra-ui/core": "^0.4.1",
+    "@emotion/core": "^10.0.22",
+    "@emotion/styled": "^10.0.23",
+    "@reach/router": "^1.2.1",
     "@types/jest": "24.0.23",
     "@types/node": "12.12.14",
     "@types/react": "16.9.13",
     "@types/react-dom": "16.9.4",
+    "emotion-theming": "^10.0.19",
+    "firebase": "^7.5.0",
+    "lodash": "^4.17.15",
+    "promise-throttle": "^1.0.1",
+    "prop-types": "^15.7.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
+    "react-infinite-scroller": "^1.2.4",
+    "react-redux": "^7.1.3",
+    "react-redux-firebase": "^3.0.5",
     "react-scripts": "3.2.0",
+    "redux": "^4.0.4",
+    "redux-actions": "^2.6.5",
+    "redux-promise": "^0.6.0",
     "typescript": "3.7.2"
   },
   "scripts": {
@@ -32,5 +47,14 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/reach__router": "^1.2.6",
+    "@types/react-redux": "^7.1.5",
+    "@typescript-eslint/parser": "^2.10.0",
+    "babel-eslint": "^10.0.3",
+    "eslint": "^6.7.2",
+    "eslint-config-react-app": "^5.0.2",
+    "eslint-plugin-babel": "^5.3.0"
   }
 }
