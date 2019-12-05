@@ -21,7 +21,7 @@ const Layout = props => (
   <Stack
     px={4}
     minHeight="100vh"
-    backgroundColor="blue.50"
+    backgroundColor="yellow.50"
     direction="column"
     align="center"
   >

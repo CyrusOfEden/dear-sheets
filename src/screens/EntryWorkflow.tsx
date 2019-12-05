@@ -141,8 +141,7 @@ const Header = ({ salesCount, reloadSales, navigate, location }) => {
       flexDirection="row"
       alignItems="center"
       justifyContent={isLoading ? "center" : "flex-end"}
-      bg="blue.50"
-      borderBottomColor="blue.100"
+      borderBottomColor="yellow.200"
       borderBottomWidth={1}
       py={2}
     >
@@ -151,7 +150,7 @@ const Header = ({ salesCount, reloadSales, navigate, location }) => {
           <Box width={[1, 0.5]} px={8} opacity={0.8}>
             <Progress hasStripe isAnimated value={progress} borderRadius={4} />
           </Box>
-          <Text color="blue.500">
+          <Text color="yellow.500">
             {salesCount.loaded}/{salesCount.total}
           </Text>
         </>
@@ -166,12 +165,11 @@ const Header = ({ salesCount, reloadSales, navigate, location }) => {
           aria-label="Sync"
           icon="repeat-clock"
           variant="link"
-          color="blue.300"
-          variantColor="blue"
+          variantColor="yellow"
         />
       )}
       {/* <Link to="/settings">
-          <Button variant="link" variantColor="blue">
+          <Button variant="link" variantColor="yellow">
             <Icon aria-label="Settings Page" name="settings" />
           </Button>
         </Link> */}
@@ -216,7 +214,7 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
           opacity={focus === "toEnter" ? 1 : 0.4}
           onClick={() => setFocus("toEnter")}
         >
-          <Heading color="blue.800" mb={4}>
+          <Heading color="yellow.800" mb={4}>
             To Enter
           </Heading>
           {salesToEnter.map(sale => (
@@ -237,7 +235,7 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
           {salesToAuthorize.length > 0 && (
             <>
               <Flex flexDirection="row" alignItems="center">
-                <Heading color="blue.800">To Authorize</Heading>
+                <Heading color="yellow.800">To Authorize</Heading>
                 <IconButton
                   aria-label="Mark all entered orders as authorized"
                   icon="check"
@@ -245,7 +243,7 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
                     salesToAuthorize.forEach(Dear.Sale.Actions.markAuthorized)
                   }
                   variant="outline"
-                  variantColor="green"
+                  variantColor="purple"
                   size="md"
                   ml="auto"
                 />

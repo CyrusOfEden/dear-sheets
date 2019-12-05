@@ -41,7 +41,7 @@ const Login: React.FC = ({ navigate }: RouteComponentProps) => {
           ☕️
         </span>
       </Heading>
-      <Heading fontSize="lg" mb={8} color="blue.500">
+      <Heading fontSize="lg" mb={8} color="yellow.500">
         {welcomeText}
       </Heading>
       <Button
@@ -53,7 +53,7 @@ const Login: React.FC = ({ navigate }: RouteComponentProps) => {
           await login()
           nextStep()
         }}
-        variantColor="blue"
+        variantColor="yellow"
         rightIcon="arrow-forward"
       >
         Get Started

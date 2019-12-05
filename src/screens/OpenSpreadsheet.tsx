@@ -25,14 +25,14 @@ export default withAuth(({ navigate }: RouteComponentProps) => {
   return (
     <Stack direction="column" mt="16vh" align="center">
       <Box>
-        <Heading textAlign="center" color="blue.700" size="lg">
+        <Heading textAlign="center" color="yellow.700" size="lg">
           Open spreadsheet
         </Heading>
       </Box>
       <Stack width={4 / 5} maxWidth={420} mt={4} direction="row" align="center">
         <Input ref={url} placeholder="Spreadsheet URL" />
         <Button
-          variantColor="blue"
+          variantColor="yellow"
           isLoading={isLoading}
           loadingText="Opening..."
           onClick={openSpreadsheet}

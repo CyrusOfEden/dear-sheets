@@ -3,7 +3,7 @@ import React from "react"
 import { Stack, Text, Link, IconButton } from "@chakra-ui/core"
 
 import LoadingSpinner from "./LoadingSpinner"
-import FocusCard from "./FocusCard"
+import { FocusCard } from "./Card"
 
 import * as Dear from "../dear-api"
 
@@ -18,7 +18,7 @@ const SaleCard = ({ sale, ...props }: SaleCardProps) => (
         <LoadingSpinner size="md" mt={2} ml={4} />
       ) : (
         <>
-          <Stack direction="row" bg="blue.50" px={4} py={2} borderRadius={8}>
+          <Stack direction="row" bg="yellow.50" px={4} py={2} borderRadius={8}>
             <Link
               fontWeight="bold"
               href={sale.url}
@@ -41,9 +41,9 @@ const SaleCard = ({ sale, ...props }: SaleCardProps) => (
             <IconButton
               icon="arrow-right"
               size="xs"
-              variantColor="green"
-              color={isFocused ? "white" : "blue.400"}
-              bg={isFocused ? "green.300" : "blue.50"}
+              variantColor="purple"
+              color={isFocused ? "white" : "yellow.400"}
+              bg={isFocused ? "purple.400" : "yellow.50"}
               aria-label={`Mark order by ${sale.customer.name} as entered`}
               onClick={() => Dear.Sale.Actions.markEntered(sale)}
             />
@@ -60,7 +60,7 @@ const SaleCard = ({ sale, ...props }: SaleCardProps) => (
           </Stack>
           {sale.notes && (
             <Stack pb={2} px={4}>
-              <Text fontStyle="italic" mb={0} color="blue.500">
+              <Text fontStyle="italic" mb={0} color="yellow.500">
                 {sale.notes}
               </Text>
             </Stack>

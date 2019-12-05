@@ -13,7 +13,7 @@ const Settings = (_props: RouteComponentProps) => (
     mx="auto"
     my={8}
   >
-    <Heading color="blue.700">Settings</Heading>
+    <Heading color="yellow.700">Settings</Heading>
   </Stack>
 )
 
