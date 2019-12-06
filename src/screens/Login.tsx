@@ -22,7 +22,7 @@ const Login: React.FC = ({ navigate }: RouteComponentProps) => {
   }, [weekday])
 
   const nextStep = useCallback(() => {
-    navigate("/2/entry_workflow")
+    navigate("/1/open_spreadsheet")
   }, [navigate])
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import PromiseThrottler from "promise-throttle"
 
-import { firebase } from "./redux-firebase"
+import { firebase } from "../../redux-firebase"
 import memoize from "lodash/memoize"
 
 const loader = firebase.functions().httpsCallable("loadDear")
@@ -114,19 +114,3 @@ Sale.find = memoize(async function(id) {
   const { data } = await this.request({ method: "GET", params: { ID: id } })
   return new Sale(data)
 })
-
-export class Actions {
-  static async markAuthorized(sale) {
-    firebase.set(`sale/${sale.id}/authorizedAt`, Date.now())
-  }
-
-  static async markEntered(sale) {
-    firebase.set(`sale/${sale.id}/enteredAt`, Date.now())
-  }
-
-  static async markUnentered(sale) {
-    firebase.remove(`sale/${sale.id}/enteredAt`)
-  }
-}
-
-Sale.Actions = Actions

@@ -1,3 +1,4 @@
+import { google } from "googleapis"
 import * as functions from "firebase-functions"
 import * as admin from "firebase-admin"
 import axios from "axios"
@@ -13,10 +14,11 @@ const Dear = axios.create({
   },
 })
 
-const requireAuth = context => {
+const validateUser = context => {
   if (!context.auth || context.auth.token.disabled) {
     throw new functions.https.HttpsError("unauthenticated", "Access blocked")
   }
+  return context.auth
 }
 
 async function disableExternalUsers(user) {
@@ -30,7 +32,7 @@ async function disableExternalUsers(user) {
 }
 
 async function passthroughRequest({ route, method = "get", options }, context) {
-  requireAuth(context)
+  validateUser(context)
   console.log("Passing through request", { route, method, options })
   try {
     const { data: response } = await Dear[method](route, options)
@@ -43,3 +45,4 @@ async function passthroughRequest({ route, method = "get", options }, context) {
 
 export const gatedSignup = functions.auth.user().onCreate(disableExternalUsers)
 export const loadDear = functions.https.onCall(passthroughRequest)
+export const insertOrder = functions.https.onCall(addToProductionSheet)

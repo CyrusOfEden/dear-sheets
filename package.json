@@ -13,6 +13,7 @@
     "@types/react-dom": "16.9.4",
     "emotion-theming": "^10.0.19",
     "firebase": "^7.5.0",
+    "formik": "^2.0.6",
     "lodash": "^4.17.15",
     "promise-throttle": "^1.0.1",
     "prop-types": "^15.7.2",
@@ -49,6 +50,7 @@
     ]
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.149",
     "@types/reach__router": "^1.2.6",
     "@types/react-redux": "^7.1.5",
     "@typescript-eslint/eslint-plugin": "^2.10.0",

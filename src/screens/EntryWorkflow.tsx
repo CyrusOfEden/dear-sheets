@@ -1,12 +1,9 @@
-import React, { useMemo, useState, useEffect } from "react"
-import { RouteComponentProps } from "@reach/router"
-import { useSelector } from "react-redux"
-import { useFirebase, useFirebaseConnect, isLoaded } from "react-redux-firebase"
-
-import isEqual from "lodash/isEqual"
+import React, { useMemo, useState } from "react"
+import { Link, RouteComponentProps } from "@reach/router"
 
 import {
   Box,
+  Button,
   Flex,
   Heading,
   IconButton,
@@ -16,7 +13,7 @@ import {
 } from "@chakra-ui/core"
 
 import { withAuth } from "../auth"
-import * as Dear from "../dear-api"
+import { useSaleList, useSaleActions } from "../api/dear/hooks"
 
 import LoadingSpinner from "../components/LoadingSpinner"
 import EntryCard from "../components/EntryCard"
@@ -26,110 +23,19 @@ interface EntryWorkflowProps extends RouteComponentProps {
   spreadsheetId: string
 }
 
-const useSaleList = () => {
-  useFirebaseConnect({
-    path: "sale",
-    queryParams: ["orderByChild=SaleOrderDate"],
-  })
-  const firebase = useFirebase()
-
-  const [isComplete, setComplete] = useState(false)
-  const [page, setPage] = useState(1)
-
-  const [ids, setIds] = useState([])
-  const lookup = useSelector(
-    ({ firebase }) => firebase.data.sale || {},
-    isEqual,
-  )
-
-  useEffect(
-    function loadNextPage() {
-      const query = { page, limit: 100 }
-      Dear.SaleList.where.awaitingFulfilment(query).then(sales => {
-        setIds(items => items.concat(sales.map(sale => sale.id)))
-        if (sales.length === query.limit) {
-          setPage(page + 1)
-        } else {
-          setComplete(true)
-        }
-      })
-    },
-    [page, setPage, setComplete, setIds],
-  )
-
-  useEffect(
-    function cleanUnusedOrders() {
-      if (isComplete && isLoaded(lookup)) {
-        const current = new Set(ids)
-        for (const id of Object.keys(lookup)) {
-          if (!current.has(id)) {
-            firebase.remove(`sale/${id}`)
-          }
-        }
-      }
-    },
-    [isComplete, firebase, ids, lookup],
-  )
-
-  useEffect(
-    function loadOrders() {
-      if (isComplete && isLoaded(lookup)) {
-        const setCache = id => data => firebase.set(`sale/${id}`, data)
-        for (const id of ids) {
-          if (!(id in lookup)) {
-            Dear.Sale.find(id).then(setCache(id))
-          }
-        }
-      }
-    },
-    [isComplete, lookup, ids, firebase],
-  )
-
-  const ordered = useSelector(({ firebase }) => firebase.ordered.sale)
-  const sales = useMemo(
-    () => (ordered || []).map(({ value }) => new Dear.Sale(value)),
-    [ordered],
-  )
-
-  const reloadSales = useMemo(
-    () => () => {
-      const warning = "This will reset all progress you've made. Are you sure?"
-      if (window.confirm(warning)) {
-        return firebase.remove("sale")
-      } else {
-        return Promise.reject()
-      }
-    },
-    [firebase],
-  )
-
-  const [salesToAuthorize, salesToEnter] = useMemo(() => {
-    let toAuthorize = []
-    let toEnter = []
-    for (const sale of sales) {
-      if (sale == null || sale.isAuthorized) {
-        continue
-      } else if (sale.isEntered) {
-        toAuthorize.push(sale)
-      } else {
-        toEnter.push(sale)
-      }
-    }
-    return [toAuthorize, toEnter]
-  }, [sales])
-
-  return {
-    sales,
-    salesToAuthorize,
-    salesToEnter,
-    lookup,
-    reloadSales,
-    isComplete,
-    salesCount: {
-      loaded: sales.length,
-      total: ids.length,
-    },
-  }
+const HeaderIconButton = ({ label, name, ...props }) => (
+  <IconButton aria-label={label} icon={name} {...props} />
+)
+HeaderIconButton.defaultProps = {
+  py: 1,
+  variant: "link",
+  variantColor: "yellow",
+  _hover: {
+    color: "yellow.600",
+  },
+  _active: {
+    color: "yellow.400",
+  },
 }
 
 const Header = ({ salesCount, reloadSales, navigate, location }) => {
@@ -155,24 +61,19 @@ const Header = ({ salesCount, reloadSales, navigate, location }) => {
           </Text>
         </>
       ) : (
-        <IconButton
+        <HeaderIconButton
           onClick={() =>
             reloadSales()
               .then(() => navigate(location.pathname))
               .catch(() => {})
           }
-          py={1}
-          aria-label="Sync"
-          icon="repeat-clock"
-          variant="link"
-          variantColor="yellow"
+          label="Sync"
+          name="repeat-clock"
         />
       )}
-      {/* <Link to="/settings">
-          <Button variant="link" variantColor="yellow">
-            <Icon aria-label="Settings Page" name="settings" />
-          </Button>
-        </Link> */}
+      <Link to="/settings">
+        <HeaderIconButton label="Configuration Page" name="settings" />
+      </Link>
     </Flex>
   )
 }
@@ -186,6 +87,13 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
     salesToAuthorize,
     salesToEnter,
   } = useSaleList()
+  const { markAuthorized } = useSaleActions()
+  const clearAuthorized = useMemo(
+    () => (_: React.MouseEvent) => {
+      salesToAuthorize.forEach(markAuthorized)
+    },
+    [salesToAuthorize, markAuthorized],
+  )
 
   return !isComplete && salesCount.total === 0 ? (
     <Box mt={16} textAlign="center">
@@ -239,9 +147,7 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
                 <IconButton
                   aria-label="Mark all entered orders as authorized"
                   icon="check"
-                  onClick={() =>
-                    salesToAuthorize.forEach(Dear.Sale.Actions.markAuthorized)
-                  }
+                  onClick={clearAuthorized}
                   variant="outline"
                   variantColor="purple"
                   size="md"

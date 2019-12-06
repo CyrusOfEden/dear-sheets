@@ -1,36 +1,56 @@
 import React, { useState, useCallback, useRef } from "react"
 import { RouteComponentProps } from "@reach/router"
-import { Text, Box, Heading, Input, Stack, Button } from "@chakra-ui/core"
+import { Icon, Text, Box, Heading, Input, Stack, Button } from "@chakra-ui/core"
+
 import { withAuth } from "../auth"
 
 const parseID = new RegExp("/spreadsheets/d/([\\w]+)/")
 
-export default withAuth(({ navigate }: RouteComponentProps) => {
+const inputStyles = {
+  borderColor: "yellow.500",
+  _hover: { borderColor: "yellow.300" },
+  _focus: { borderColor: "yellow.600" },
+}
+
+const OpenSpreadsheet = ({ navigate }: RouteComponentProps) => {
   const url = useRef(null)
   const [error, setError] = useState(false)
   const [isLoading, setLoading] = useState(false)
 
-  const openSpreadsheet = useCallback(() => {
-    setLoading(true)
-    const match = (url.current.value as string).match(parseID)
-    if (match) {
-      setError(false)
-      navigate(`/2/entry_workflow/${match[1]}`)
-    } else {
-      setLoading(false)
-      setError(true)
-    }
-  }, [navigate, url, setLoading])
+  const openSpreadsheet = useCallback(
+    event => {
+      event.preventDefault()
+      setLoading(true)
+      const match = (url.current.value as string).match(parseID)
+      if (match) {
+        setError(false)
+        navigate(`/2/entry_workflow/${match[1]}`)
+      } else {
+        setLoading(false)
+        setError(true)
+      }
+    },
+    [navigate, url, setLoading],
+  )
 
   return (
     <Stack direction="column" mt="16vh" align="center">
-      <Box>
-        <Heading textAlign="center" color="yellow.700" size="lg">
-          Open spreadsheet
+      <Box textAlign="center">
+        <Heading color="yellow.700" size="xl">
+          <Icon name="edit" color="yellow.500" mr={4} />
+          Enter Spreadsheet
         </Heading>
       </Box>
-      <Stack width={4 / 5} maxWidth={420} mt={4} direction="row" align="center">
-        <Input ref={url} placeholder="Spreadsheet URL" />
+      <Stack
+        width={4 / 5}
+        maxWidth={420}
+        mt={4}
+        direction="row"
+        align="center"
+        as="form"
+        onSubmit={openSpreadsheet}
+      >
+        <Input ref={url} placeholder="Spreadsheet URL" {...inputStyles} />
         <Button
           variantColor="yellow"
           isLoading={isLoading}
@@ -41,10 +61,12 @@ export default withAuth(({ navigate }: RouteComponentProps) => {
         </Button>
       </Stack>
       {error && (
-        <Box textAlign="center">
-          <Text color="red">Hmm... that doesn't seem quite right.</Text>
+        <Box textAlign="center" mt={8}>
+          <Text color="purple.700">Hmm... that doesn't seem quite right.</Text>
         </Box>
       )}
     </Stack>
   )
-})
+}
+
+export default withAuth(OpenSpreadsheet)
