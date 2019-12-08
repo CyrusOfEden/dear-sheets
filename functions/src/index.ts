@@ -1,4 +1,3 @@
-import { google } from "googleapis"
 import * as functions from "firebase-functions"
 import * as admin from "firebase-admin"
 import axios from "axios"
@@ -45,4 +44,3 @@ async function passthroughRequest({ route, method = "get", options }, context) {
 
 export const gatedSignup = functions.auth.user().onCreate(disableExternalUsers)
 export const loadDear = functions.https.onCall(passthroughRequest)
-export const insertOrder = functions.https.onCall(addToProductionSheet)

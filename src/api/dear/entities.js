@@ -22,6 +22,9 @@ export class Product extends APIResponseWrapper {
   get id() {
     return this.ProductID
   }
+  get url() {
+    return `https://inventory.dearsystems.com/product#${this.id}`
+  }
   get name() {
     return this.Name
   }
@@ -74,22 +77,34 @@ export class Sale extends APIResponseWrapper {
       : {}
   }
 
+  get url() {
+    return `https://inventory.dearsystems.com/sale#${this.id}`
+  }
+
+  get isEntered() {
+    return !!this.entered
+  }
+
+  get isAuthorized() {
+    return !!this.authorizedAt
+  }
+
   get items() {
     return ((this.Order && this.Order.Lines) || []).map(
       data => new Product(data),
     )
   }
 
-  get url() {
-    return `https://inventory.dearsystems.com/sale#${this.id}`
+  get unenteredItems() {
+    return (this.skipped || []).map(data => new Product(data))
   }
 
-  get isEntered() {
-    return !!this.enteredAt
-  }
-
-  get isAuthorized() {
-    return !!this.authorizedAt
+  get enteredItems() {
+    let unentered = {}
+    for (const product of this.unenteredItems) {
+      unentered[product.sku] = true
+    }
+    return this.items.filter(product => unentered[product.sku] === undefined)
   }
 
   get notes() {

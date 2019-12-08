@@ -36,11 +36,6 @@ const Login: React.FC = ({ navigate }: RouteComponentProps) => {
 
   return (
     <Box padding={[4, 16]} mx="auto" textAlign="center">
-      <Heading fontSize={128} mt={4} mb={2}>
-        <span role="img" aria-label="A cup of coffee">
-          ☕️
-        </span>
-      </Heading>
       <Heading fontSize="lg" mb={8} color="yellow.500">
         {welcomeText}
       </Heading>

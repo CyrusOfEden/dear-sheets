@@ -7,9 +7,8 @@ import {
   useFirebase,
 } from "react-redux-firebase"
 
-import { Box } from "@chakra-ui/core"
+import LoadingScreen from "./screens/Loading"
 
-import LoadingSpinner from "./components/LoadingSpinner"
 import { redirectTo } from "@reach/router"
 
 const config: Credentials = {
@@ -33,11 +32,7 @@ export const withAuth = Component => props => {
   const [auth, isAuthorized] = useAuth()
 
   if (!isLoaded(auth)) {
-    return (
-      <Box textAlign="center" mt={16}>
-        <LoadingSpinner />
-      </Box>
-    )
+    return <LoadingScreen message="" />
   }
 
   if (!isAuthorized) {

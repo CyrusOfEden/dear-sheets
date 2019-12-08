@@ -1,9 +1,8 @@
 import React, { useMemo, useState } from "react"
-import { Link, RouteComponentProps } from "@reach/router"
+import { RouteComponentProps } from "@reach/router"
 
 import {
   Box,
-  Button,
   Flex,
   Heading,
   IconButton,
@@ -14,14 +13,12 @@ import {
 
 import { withAuth } from "../auth"
 import { useSaleList, useSaleActions } from "../api/dear/hooks"
+import { useGoogleSheet } from "../api/sheets"
 
-import LoadingSpinner from "../components/LoadingSpinner"
+import LoadingScreen from "./Loading"
+
 import EntryCard from "../components/EntryCard"
 import AuthorizeCard from "../components/AuthorizeCard"
-
-interface EntryWorkflowProps extends RouteComponentProps {
-  spreadsheetId: string
-}
 
 const HeaderIconButton = ({ label, name, ...props }) => (
   <IconButton aria-label={label} icon={name} {...props} />
@@ -71,15 +68,23 @@ const Header = ({ salesCount, reloadSales, navigate, location }) => {
           name="repeat-clock"
         />
       )}
-      <Link to="/settings">
-        <HeaderIconButton label="Configuration Page" name="settings" />
-      </Link>
     </Flex>
   )
 }
 
-const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
+interface EntryWorkflowProps extends RouteComponentProps {
+  spreadsheet: string
+}
+
+const EntryWorkflow = ({
+  navigate,
+  location,
+  spreadsheet,
+}: EntryWorkflowProps) => {
   const [focus, setFocus] = useState("toEnter")
+
+  const { config, addOrder } = useGoogleSheet(spreadsheet)
+
   const {
     isComplete,
     reloadSales,
@@ -87,6 +92,7 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
     salesToAuthorize,
     salesToEnter,
   } = useSaleList()
+
   const { markAuthorized } = useSaleActions()
   const clearAuthorized = useMemo(
     () => (_: React.MouseEvent) => {
@@ -95,10 +101,11 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
     [salesToAuthorize, markAuthorized],
   )
 
-  return !isComplete && salesCount.total === 0 ? (
-    <Box mt={16} textAlign="center">
-      <LoadingSpinner />
-    </Box>
+  const loadingSales = !isComplete && salesCount.total === 0
+  const loadingConfig = config === null
+
+  return loadingSales || loadingConfig ? (
+    <LoadingScreen message="Opening spreadsheet..." />
   ) : (
     <Stack flexDirection="column">
       <Header
@@ -113,8 +120,6 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
         alignItems={["center", "center", "flex-start"]}
       >
         <Box
-          position={["static", "static", "sticky"]}
-          top={4}
           width={["100%", 4 / 5, 1 / 2]}
           mr={[0, "auto", 4]}
           ml="auto"
@@ -126,12 +131,15 @@ const EntryWorkflow = ({ navigate, location }: EntryWorkflowProps) => {
             To Enter
           </Heading>
           {salesToEnter.map(sale => (
-            <EntryCard key={sale.id} sale={sale} />
+            <EntryCard
+              config={config}
+              addOrder={addOrder}
+              key={sale.id}
+              sale={sale}
+            />
           ))}
         </Box>
         <Box
-          position={["static", "static", "sticky"]}
-          top={4}
           ml={[0, "auto", 4]}
           mr="auto"
           mt={[8, 8, 0]}

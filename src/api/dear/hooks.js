@@ -1,59 +1,47 @@
-import React, { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useSelector } from "react-redux"
 import { useFirebase, useFirebaseConnect, isLoaded } from "react-redux-firebase"
 
-import * as Dear from "./rest"
+import * as Dear from "./entities"
 
-interface SaleAction {
-  (sale: Dear.Sale): Promise<any>
-}
-
-interface EventAction {
-  (event: React.MouseEvent): void
-}
-
-interface SaleActions {
-  markAuthorized: SaleAction
-  markEntered: SaleAction
-  markUnentered: SaleAction
-}
-
-interface EventActions {
-  markAuthorized: EventAction
-  markEntered: EventAction
-  markUnentered: EventAction
-}
-
-const buildFirebaseActions = (firebase): SaleActions => {
-  let markAuthorized: SaleAction = (sale: Dear.Sale) =>
+const buildFirebaseActions = firebase => {
+  let markAuthorized = sale =>
     firebase.set(`sale/${sale.id}/authorizedAt`, Date.now())
 
-  let markEntered: SaleAction = (sale: Dear.Sale) =>
-    firebase.set(`sale/${sale.id}/enteredAt`, Date.now())
+  let markEntered = (sale, sheet) =>
+    firebase.set(`sale/${sale.id}/entered`, sheet)
 
-  let markUnentered: SaleAction = (sale: Dear.Sale) =>
-    firebase.remove(`sale/${sale.id}/enteredAt`)
+  let markUnentered = sale =>
+    firebase.ref(`sale/${sale.id}`).update({ entered: null, skipped: null })
 
-  return { markAuthorized, markEntered, markUnentered }
+  let setSkipped = (sale, skipped) =>
+    firebase.set(`sale/${sale.id}/skipped`, skipped)
+
+  return { markAuthorized, markEntered, markUnentered, setSkipped }
 }
 
-export const useSaleActions = (): SaleActions => {
+export const useSaleActions = () => {
   const firebase = useFirebase()
 
   return useMemo(() => buildFirebaseActions(firebase), [firebase])
 }
 
-export const useSaleMethods = (sale: Dear.Sale): EventActions => {
+export const useSaleMethods = sale => {
   const firebase = useFirebase()
 
   return useMemo(() => {
     const actions = buildFirebaseActions(firebase)
     let events = {}
     for (const [name, fn] of Object.entries(actions)) {
-      events[name] = (_event: React.MouseEvent) => fn(sale)
+      events[name] = (...args) => fn(sale, ...args)
     }
-    return events as EventActions
+    return events
   }, [firebase, sale])
+}
+
+const delayEffect = (ms, fn) => () => {
+  const timer = setTimeout(fn, ms)
+  return () => clearTimeout(timer)
 }
 
 export const useSaleList = () => {
@@ -85,7 +73,7 @@ export const useSaleList = () => {
   )
 
   useEffect(
-    function cleanUnusedOrders() {
+    delayEffect(5000, function cleanUnusedOrders() {
       if (isComplete && isLoaded(lookup)) {
         const current = new Set(ids)
         for (const id of Object.keys(lookup)) {
@@ -94,21 +82,21 @@ export const useSaleList = () => {
           }
         }
       }
-    },
+    }),
     [isComplete, firebase, ids, lookup],
   )
 
   useEffect(
-    function loadOrders() {
+    delayEffect(2000, function loadOrders() {
       if (isComplete && isLoaded(lookup)) {
-        const setCache = id => data => firebase.set(`sale/${id}`, data)
+        const setCache = id => data => firebase.ref(`sale/${id}`).update(data)
         for (const id of ids) {
           if (!(id in lookup)) {
             Dear.Sale.find(id).then(setCache(id))
           }
         }
       }
-    },
+    }),
     [isComplete, lookup, ids, firebase],
   )
 

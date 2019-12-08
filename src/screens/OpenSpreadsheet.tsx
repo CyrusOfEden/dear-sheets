@@ -38,7 +38,7 @@ const OpenSpreadsheet = ({ navigate }: RouteComponentProps) => {
       <Box textAlign="center">
         <Heading color="yellow.700" size="xl">
           <Icon name="edit" color="yellow.500" mr={4} />
-          Enter Spreadsheet
+          Open a Spreadsheet
         </Heading>
       </Box>
       <Stack
