@@ -14,7 +14,7 @@ import { redirectTo } from "@reach/router"
 const config: Credentials = {
   provider: "google",
   type: "popup",
-  scopes: ["email", "https://www.googleapis.com/auth/spreadsheets"],
+  scopes: ["email"],
 }
 
 export const useGoogleLogin = () => {
