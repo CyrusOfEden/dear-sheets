@@ -14,6 +14,8 @@ const expression = sample([
   "Happbeanness awaits",
   "By any beans necessary",
   "Brew can do it",
+  "Ready before brew know it",
+  "I'm glad to see brew",
 ])
 
 const Loading = ({ message }) => (

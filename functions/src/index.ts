@@ -22,9 +22,9 @@ const validateUser = context => {
 
 async function disableExternalUsers(user) {
   try {
-    const isDisabled = !`${user.email}`.endsWith("detourcoffee.com")
-    await admin.auth().updateUser(user.uid, { disabled: isDisabled })
-    console.log(`${user.email} ${isDisabled ? "disabled" : "signed up"}`)
+    const authorized = `${user.email}`.endsWith("detourcoffee.com")
+    await admin.auth().updateUser(user.uid, { disabled: !authorized })
+    console.log(`${user.email} ${authorized ? "signed up" : "disabled"}`)
   } catch (error) {
     console.error(`Error disabling ${user.uid} ${user.email}`, error)
   }

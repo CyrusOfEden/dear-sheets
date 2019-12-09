@@ -36,7 +36,7 @@ const Login: React.FC = ({ navigate }: RouteComponentProps) => {
 
   return (
     <Box padding={[4, 16]} mx="auto" textAlign="center">
-      <Heading fontSize="lg" mb={8} color="yellow.500">
+      <Heading fontSize="2xl" mt={16} mb={8} color="yellow.700">
         {welcomeText}
       </Heading>
       <Button

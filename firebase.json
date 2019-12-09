@@ -1,7 +1,6 @@
 {
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
+  "database": {
+    "rules": "database.rules.json"
   },
   "functions": {
     "predeploy": [
@@ -10,7 +9,8 @@
     ]
   },
   "hosting": {
-    "public": "build",
+    "site": "detour-sheets",
+    "public": "public",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -27,8 +27,8 @@
     "functions": {
       "port": 5001
     },
-    "firestore": {
-      "port": 8080
+    "database": {
+      "port": 9000
     },
     "hosting": {
       "port": 5000
