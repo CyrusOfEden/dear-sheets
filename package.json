@@ -35,6 +35,7 @@
     "eject": "react-scripts eject",
     "deploy": "yarn build && firebase deploy"
   },
+  "homepage": "https://detour-sheets.web.app",
   "eslintConfig": {
     "extends": "react-app"
   },
