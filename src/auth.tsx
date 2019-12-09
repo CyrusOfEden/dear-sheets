@@ -17,10 +17,14 @@ const config: Credentials = {
   scopes: ["email"],
 }
 
-export const useGoogleLogin = () => {
+interface LoginCredentials {
+  profile: { email: string; avatarUrl: string; displayName: string }
+}
+
+export const useGoogleLogin = (): (() => Promise<LoginCredentials>) => {
   const firebase = useFirebase()
   const login = useMemo(() => () => firebase.login(config), [firebase])
-  return login
+  return (login as unknown) as () => Promise<LoginCredentials>
 }
 
 export const useAuth = () => {

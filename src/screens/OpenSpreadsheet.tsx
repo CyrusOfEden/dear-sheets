@@ -7,6 +7,7 @@ import { withAuth } from "../auth"
 const parseID = new RegExp("/spreadsheets/d/([\\w]+)/")
 
 const inputStyles = {
+  color: "yellow.800",
   borderColor: "yellow.500",
   _hover: { borderColor: "yellow.300" },
   _focus: { borderColor: "yellow.600" },
