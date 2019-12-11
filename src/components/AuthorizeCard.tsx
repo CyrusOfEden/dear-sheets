@@ -50,7 +50,10 @@ const AuthorizeCard = ({ sale, ...props }) => {
             <Stack direction="row" ml="auto">
               <IconButton
                 icon="close"
-                onClick={markUnentered}
+                onClick={event => {
+                  event.stopPropagation()
+                  markUnentered()
+                }}
                 size="xs"
                 mr={8}
                 variant="outline"

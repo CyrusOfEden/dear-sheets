@@ -119,7 +119,10 @@ const SaleCard = ({ sale, config, addOrder, ...props }: SaleCardProps) => {
                 color={isFocused ? "white" : "yellow.400"}
                 bg={isFocused ? "purple.400" : "yellow.50"}
                 aria-label={`Mark order by ${sale.customer.name} as entered`}
-                onClick={enterOrder}
+                onClick={event => {
+                  event.preventDefault()
+                  enterOrder()
+                }}
                 isDisabled={day === null}
               />
             </Stack>
