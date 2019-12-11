@@ -25,29 +25,16 @@ const AuthorizeCard = ({ sale, ...props }) => {
             width="100%"
           >
             <Stack direction="column" width="60%">
-              <Stack direction="row" width="100%">
-                <IconButton
-                  icon="arrow-left"
-                  onClick={markUnentered}
-                  size="xs"
-                  mr={8}
-                  variant="outline"
-                  variantColor="purple"
-                  // borderColor={isFocused ? "purple.400" : "yellow.50"}
-                  // color={isFocused ? "purple.600" : "yellow.200"}
-                  aria-label={`Mark order by ${sale.customer.name} as not entered`}
-                />
-                <Link
-                  fontWeight="bold"
-                  href={sale.url}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  width="100%"
-                  isTruncated
-                >
-                  {sale.customer.name}
-                </Link>
-              </Stack>
+              <Link
+                fontWeight="bold"
+                href={sale.url}
+                rel="noopener noreferrer"
+                target="_blank"
+                width="100%"
+                isTruncated
+              >
+                {sale.customer.name}
+              </Link>
               <Stack direction="row">
                 <Text>{sale.orderDate.toLocaleDateString()}</Text>
                 <Link
@@ -59,19 +46,23 @@ const AuthorizeCard = ({ sale, ...props }) => {
                   {sale.invoice.number}
                 </Link>
               </Stack>
-              {/* <IconButton
-                icon="check"
-                onClick={() => ref.set({ authorizedAt: Date.now() })}
-                size="xs"
-                variantColor="purple"
-                bg={isFocused ? "purple.300" : "yellow.50"}
-                color={isFocused ? "white" : "yellow.400"}
-                aria-label={`Authorize order by ${sale.customer.name}`}
-              /> */}
             </Stack>
-            <Heading fontWeight="bold" fontSize="lg" ml="auto">
-              {sale.entered}
-            </Heading>
+            <Stack direction="row" ml="auto">
+              <IconButton
+                icon="close"
+                onClick={markUnentered}
+                size="xs"
+                mr={8}
+                variant="outline"
+                variantColor="purple"
+                // borderColor={isFocused ? "purple.400" : "yellow.50"}
+                // color={isFocused ? "purple.600" : "yellow.200"}
+                aria-label={`Mark order by ${sale.customer.name} as not entered`}
+              />
+              <Heading fontWeight="bold" fontSize="lg">
+                {sale.entered}
+              </Heading>
+            </Stack>
           </Stack>
           {sale.enteredItems.length !== 0 && (
             <Stack direction="column" px={4} py={2} borderRadius={8}>

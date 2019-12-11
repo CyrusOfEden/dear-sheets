@@ -76,12 +76,24 @@ interface EntryWorkflowProps extends RouteComponentProps {
   spreadsheet: string
 }
 
+const useEnum = (states, initialValue = states[0]) => {
+  const [_value, setValue] = useState(initialValue)
+  const value = useMemo(() => {
+    let results = {}
+    for (const state of states) {
+      results[state] = _value === state
+    }
+    return results
+  }, [_value, states])
+  return [value as any, setValue]
+}
+
 const EntryWorkflow = ({
   navigate,
   location,
   spreadsheet,
 }: EntryWorkflowProps) => {
-  const [focus, setFocus] = useState("toEnter")
+  const [focus, setFocus] = useEnum(["toEnter", "toAuthorize"])
 
   const { config, addOrder } = useGoogleSheet(spreadsheet)
 
@@ -114,17 +126,17 @@ const EntryWorkflow = ({
         navigate={navigate}
         location={location}
       />
-      <Stack
+      <Flex
         mt={4}
         flexDirection={["column", "column", "row"]}
         alignItems={["center", "center", "flex-start"]}
       >
         <Box
           width={["100%", 4 / 5, 1 / 2]}
-          mr={[0, "auto", 4]}
-          ml="auto"
-          pb={[0, 0, 8]}
-          opacity={focus === "toEnter" ? 1 : 0.4}
+          ml={["auto", "auto", focus.toEnter ? 0 : 4]}
+          mr={["auto", "auto", focus.toEnter ? 4 : 0]}
+          mt={[8, 8, 0]}
+          opacity={focus.toEnter ? 1 : 0.4}
           onClick={() => setFocus("toEnter")}
         >
           <Heading color="yellow.800" mb={4}>
@@ -140,12 +152,11 @@ const EntryWorkflow = ({
           ))}
         </Box>
         <Box
-          ml={[0, "auto", 4]}
-          mr="auto"
-          mt={[8, 8, 0]}
-          pb={[0, 0, 8]}
+          ml={["auto", "auto", focus.toAuthorize ? 0 : 4]}
+          mr={["auto", "auto", focus.toAuthorize ? 4 : 0]}
+          order={[-1, -1, focus.toAuthorize ? -1 : 1]}
           width={["100%", 4 / 5, 1 / 2]}
-          opacity={focus === "toAuthorize" ? 1 : 0.4}
+          opacity={focus.toAuthorize ? 1 : 0.4}
           onClick={() => setFocus("toAuthorize")}
         >
           {salesToAuthorize.length > 0 && (
@@ -168,7 +179,7 @@ const EntryWorkflow = ({
             </>
           )}
         </Box>
-      </Stack>
+      </Flex>
     </Stack>
   )
 }
