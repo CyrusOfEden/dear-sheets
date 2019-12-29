@@ -44,6 +44,15 @@ const delayEffect = (ms, fn) => () => {
   return () => clearTimeout(timer)
 }
 
+const loadUnfulfilledSales = async () => {
+  const states = new Set(["NOT FULFILLED", "PARTIALLY FULFILLED"])
+  const oneDay = 24 * 60 * 60 * 1000
+  const twoWeeksAgo = new Date(Date.now() - 14 * oneDay)
+  const query = { UpdatedSince: twoWeeksAgo.toISOString() }
+  const updatedSales = await Dear.SaleList.all(query)
+  return updatedSales.filter(sale => states.has(sale.FulFilmentStatus))
+}
+
 export const useSaleList = () => {
   useFirebaseConnect({
     path: "sale",
@@ -52,35 +61,28 @@ export const useSaleList = () => {
   const firebase = useFirebase()
 
   const [isComplete, setComplete] = useState(false)
-  const [page, setPage] = useState(1)
 
   const [ids, setIds] = useState([])
   const lookup = useSelector(({ firebase }) => firebase.data.sale || {})
 
   useEffect(
-    function loadNextPage() {
-      const query = { page, limit: 100 }
-      Dear.SaleList.where.awaitingFulfilment(query).then(sales => {
-        setIds(items => items.concat(sales.map(sale => sale.id)))
-        if (sales.length === query.limit) {
-          setPage(page + 1)
-        } else {
-          setComplete(true)
-        }
-      })
+    function loadSales() {
+      loadUnfulfilledSales()
+        .then(sales => setIds(sales.map(sale => sale.id)))
+        .then(() => setComplete(true))
     },
-    [page, setPage, setComplete, setIds],
+    [setComplete, setIds],
   )
 
   useEffect(
     delayEffect(5000, function cleanUnusedOrders() {
       if (isComplete && isLoaded(lookup)) {
         const current = new Set(ids)
-        for (const id of Object.keys(lookup)) {
-          if (!current.has(id)) {
-            firebase.remove(`sale/${id}`)
-          }
-        }
+        const removedIds = Object.keys(lookup).filter(id => !current.has(id))
+        const operations = removedIds.map(id => firebase.remove(`sale/${id}`))
+        Promise.all(operations).then(() => {
+          console.info("Cleaned up unused sales from Firebase")
+        })
       }
     }),
     [isComplete, firebase, ids, lookup],
@@ -90,11 +92,13 @@ export const useSaleList = () => {
     delayEffect(2000, function loadOrders() {
       if (isComplete && isLoaded(lookup)) {
         const setCache = id => data => firebase.ref(`sale/${id}`).update(data)
-        for (const id of ids) {
-          if (!(id in lookup)) {
-            Dear.Sale.find(id).then(setCache(id))
-          }
-        }
+        const idsToLoad = ids.filter(id => !(id in lookup))
+        const operations = idsToLoad.map(id =>
+          Dear.Sale.find(id).then(setCache(id)),
+        )
+        Promise.all(operations).then(() => {
+          console.info(`Loaded ${idsToLoad.length} sales`)
+        })
       }
     }),
     [isComplete, lookup, ids, firebase],

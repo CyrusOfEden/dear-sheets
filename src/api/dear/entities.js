@@ -1,16 +1,17 @@
 import PromiseThrottler from "promise-throttle"
 
-import { firebase } from "../../redux-firebase"
+import axios from "axios"
 import memoize from "lodash/memoize"
-
-const loader = firebase.functions().httpsCallable("loadDear")
 
 const rateLimiter = new PromiseThrottler({
   requestsPerSecond: 1,
   promiseImplementation: Promise,
 })
 
-const rpc = (...args) => rateLimiter.add(loader.bind(loader, ...args))
+const rpc = data =>
+  rateLimiter.add(() =>
+    axios.post("https://en1b7j297hdg82f.m.pipedream.net", data),
+  )
 
 class APIResponseWrapper {
   constructor(data) {
@@ -45,17 +46,30 @@ export class SaleList {
     if (!params) {
       throw new Error(`Invalid query ${params}`)
     }
-    const { data } = await this.request({ params, method: "GET" })
+    const { data } = await this.request({ params, method: "get" })
     return data.SaleList.map(data => new Sale(data))
   }
-}
 
-SaleList.where.awaitingFulfilment = (query = {}) =>
-  SaleList.where({
-    ...query,
-    OrderStatus: "AUTHORISED",
-    CombinedShippingStatus: "NOT SHIPPED",
-  })
+  static async all(params) {
+    let page = 1
+    let results = []
+    let total = Infinity
+    do {
+      const { data } = await this.request({
+        method: "GET",
+        params: {
+          ...params,
+          page,
+          limit: 250,
+        },
+      })
+      total = data.Total
+      page += 1
+      results = results.concat(data.SaleList)
+    } while (results.length < total)
+    return results.map(data => new Sale(data))
+  }
+}
 
 export class Sale extends APIResponseWrapper {
   static request(options) {
@@ -126,6 +140,9 @@ export class Sale extends APIResponseWrapper {
 }
 
 Sale.find = memoize(async function(id) {
-  const { data } = await this.request({ method: "GET", params: { ID: id } })
+  if (id == null) {
+    throw new Error(`Invalid id=${id}`)
+  }
+  const { data } = await this.request({ method: "get", params: { ID: id } })
   return new Sale(data)
 })

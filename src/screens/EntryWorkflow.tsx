@@ -116,8 +116,10 @@ const EntryWorkflow = ({
   const loadingSales = !isComplete && salesCount.total === 0
   const loadingConfig = config === null
 
-  return loadingSales || loadingConfig ? (
+  return loadingConfig ? (
     <LoadingScreen message="Opening spreadsheet..." />
+  ) : loadingSales ? (
+    <LoadingScreen message="Loading orders..." />
   ) : (
     <Stack flexDirection="column">
       <Header
