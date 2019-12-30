@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react"
 import { useSelector } from "react-redux"
 import { useFirebase, useFirebaseConnect, isLoaded } from "react-redux-firebase"
 
+import axios from "axios"
 import * as Dear from "./entities"
 
 const buildFirebaseActions = firebase => {
@@ -44,13 +45,9 @@ const delayEffect = (ms, fn) => () => {
   return () => clearTimeout(timer)
 }
 
-const loadUnfulfilledSales = async () => {
-  const states = new Set(["NOT FULFILLED", "PARTIALLY FULFILLED"])
-  const oneDay = 24 * 60 * 60 * 1000
-  const twoWeeksAgo = new Date(Date.now() - 14 * oneDay)
-  const query = { UpdatedSince: twoWeeksAgo.toISOString() }
-  const updatedSales = await Dear.SaleList.all(query)
-  return updatedSales.filter(sale => states.has(sale.FulFilmentStatus))
+const loadUnfulfilledSaleIDs = async () => {
+  const { data } = await axios.get("https://enn26jnkmnnsctl.m.pipedream.net")
+  return data.saleIDs || []
 }
 
 export const useSaleList = () => {
@@ -67,8 +64,8 @@ export const useSaleList = () => {
 
   useEffect(
     function loadSales() {
-      loadUnfulfilledSales()
-        .then(sales => setIds(sales.map(sale => sale.id)))
+      loadUnfulfilledSaleIDs()
+        .then(setIds)
         .then(() => setComplete(true))
     },
     [setComplete, setIds],
