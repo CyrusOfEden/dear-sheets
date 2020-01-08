@@ -34,7 +34,7 @@ const initialState = {}
 const store = createStore(
   rootReducer,
   initialState,
-  composeWithDevTools(applyMiddleware(promiseMiddleware)),
+  composeWithDevTools({ trace: true })(applyMiddleware(promiseMiddleware)),
 )
 
 const firebaseProvider = {

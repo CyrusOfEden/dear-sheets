@@ -22,12 +22,13 @@ const cacheSales = async ({ ids, firebase }) => {
   console.info(`Removing ${idsToRemove.length} sales`)
   await Promise.all(idsToRemove.map(id => firebase.remove(`sale/${id}`)))
 
+  const cacheSale = id =>
+    Dear.Sale.find(id).then(data => {
+      console.info(`Loaded ${id}`)
+      return firebase.set(`sale/${id}`, data)
+    })
   console.info(`Loading ${idsToLoad.length} sales`)
-  await Promise.all(
-    idsToLoad.map(id =>
-      Dear.Sale.find(id).then(data => firebase.set(`sale/${id}`, data)),
-    ),
-  )
+  await Promise.all(idsToLoad.map(cacheSale))
 }
 
 const buildFirebaseActions = firebase => {
@@ -48,13 +49,11 @@ const buildFirebaseActions = firebase => {
 
 export const useSaleActions = () => {
   const firebase = useFirebase()
-
   return useMemo(() => buildFirebaseActions(firebase), [firebase])
 }
 
 export const useSaleMethods = sale => {
   const firebase = useFirebase()
-
   return useMemo(() => {
     const actions = buildFirebaseActions(firebase)
     let events = {}
@@ -65,11 +64,13 @@ export const useSaleMethods = sale => {
   }, [firebase, sale])
 }
 
+const saleQuery = {
+  path: "sale",
+  queryParams: ["orderByChild=SaleOrderDate"],
+}
+
 export const useSaleList = () => {
-  useFirebaseConnect({
-    path: "sale",
-    queryParams: ["orderByChild=SaleOrderDate"],
-  })
+  useFirebaseConnect(saleQuery)
   const firebase = useFirebase()
 
   const [ids, setIds] = useState(null)
@@ -82,7 +83,10 @@ export const useSaleList = () => {
   )
 
   useEffect(() => {
-    loadUnfulfilledSaleIDs().then(setIds)
+    loadUnfulfilledSaleIDs().then(ids => {
+      console.info(`Loaded ${ids.length} unfulfilled IDs`)
+      setIds(ids)
+    })
   }, [])
 
   useEffect(() => {
@@ -93,10 +97,13 @@ export const useSaleList = () => {
   }, [firebase, ids, isComplete, setComplete])
 
   const reloadSales = useMemo(
-    () => () => {
+    () => async () => {
       const warning = "This will reset all progress you've made. Are you sure?"
       if (window.confirm(warning)) {
-        return firebase.remove("sale")
+        await firebase.remove("sale")
+        setIds([])
+        setComplete(null)
+        await loadUnfulfilledSaleIDs().then(setIds)
       } else {
         return Promise.reject()
       }
