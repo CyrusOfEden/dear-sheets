@@ -96,7 +96,7 @@ export class Sale extends APIResponseWrapper {
   }
 
   get isEntered() {
-    return !!this.entered
+    return !!this.entryDay
   }
 
   get isAuthorized() {

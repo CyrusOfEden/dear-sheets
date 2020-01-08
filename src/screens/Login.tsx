@@ -30,15 +30,13 @@ const Login = ({ navigate }: RouteComponentProps) => {
     setLoading(true)
     try {
       const { profile } = await login()
-      if (profile.email.endsWith("detourcoffee.com")) {
-        nextStep()
-      } else {
+      if (!profile.email.endsWith("detourcoffee.com")) {
         setLoadingText("Unauthorized")
       }
     } catch (error) {
       setLoading(false)
     }
-  }, [setLoadingText, setLoading, nextStep, login])
+  }, [setLoadingText, setLoading, login])
 
   useEffect(() => {
     if (isAuthorized) {

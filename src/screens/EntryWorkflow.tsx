@@ -13,7 +13,7 @@ import {
 
 import { withAuth } from "../auth"
 import { useSaleList, useSaleActions } from "../api/dear/hooks"
-import { useGoogleSheet } from "../api/sheets"
+import { useGoogleSheet } from "../api/sheets/hooks"
 
 import LoadingScreen from "./Loading"
 
@@ -35,7 +35,7 @@ HeaderIconButton.defaultProps = {
   },
 }
 
-const Header = ({ salesCount, reloadSales, navigate, location }) => {
+const Header = ({ salesCount, reloadSales, location }) => {
   const progress = Math.ceil((salesCount.loaded / salesCount.total) * 100)
   const isLoading = salesCount.total > 0 && salesCount.loaded < salesCount.total
   return (
@@ -61,7 +61,7 @@ const Header = ({ salesCount, reloadSales, navigate, location }) => {
         <HeaderIconButton
           onClick={() =>
             reloadSales()
-              .then(() => navigate(location.pathname))
+              .then(() => (window.location.pathname = location.pathname))
               .catch(() => {})
           }
           label="Sync"
@@ -72,12 +72,9 @@ const Header = ({ salesCount, reloadSales, navigate, location }) => {
   )
 }
 
-interface EntryWorkflowProps extends RouteComponentProps {
-  spreadsheet: string
-}
-
 const useEnum = (states, initialValue = states[0]) => {
   const [_value, setValue] = useState(initialValue)
+
   const value = useMemo(() => {
     let results = {}
     for (const state of states) {
@@ -85,20 +82,21 @@ const useEnum = (states, initialValue = states[0]) => {
     }
     return results
   }, [_value, states])
+
   return [value as any, setValue]
 }
 
-const EntryWorkflow = ({
-  navigate,
-  location,
-  spreadsheet,
-}: EntryWorkflowProps) => {
-  const [focus, setFocus] = useEnum(["toEnter", "toAuthorize"])
 
-  const { config, addOrder } = useGoogleSheet(spreadsheet)
+interface EntryWorkflowProps extends RouteComponentProps {
+  spreadsheet: string
+}
+
+function EntryWorkflow({ location, spreadsheet }: EntryWorkflowProps) {
+  const [, setFocus] = useEnum(["toEnter", "toAuthorize"])
+
+  const sheet = useGoogleSheet(spreadsheet)
 
   const {
-    isComplete,
     reloadSales,
     salesCount,
     salesToAuthorize,
@@ -113,19 +111,15 @@ const EntryWorkflow = ({
     [salesToAuthorize, markAuthorized],
   )
 
-  const loadingSales = !isComplete && salesCount.total === 0
-  const loadingConfig = config === null
-
-  return loadingConfig ? (
+  return sheet === null ? (
     <LoadingScreen message="Opening spreadsheet..." />
-  ) : loadingSales ? (
+  ) : salesCount.total === null ? (
     <LoadingScreen message="Loading orders..." />
   ) : (
     <Stack flexDirection="column">
       <Header
         salesCount={salesCount}
         reloadSales={reloadSales}
-        navigate={navigate}
         location={location}
       />
       <Flex
@@ -135,30 +129,23 @@ const EntryWorkflow = ({
       >
         <Box
           width={["100%", 4 / 5, 1 / 2]}
-          ml={["auto", "auto", focus.toEnter ? 0 : 4]}
-          mr={["auto", "auto", focus.toEnter ? 4 : 0]}
+          ml={["auto", "auto", 0]}
+          mr={["auto", "auto", 4]}
           mt={[8, 8, 0]}
-          opacity={focus.toEnter ? 1 : 0.4}
           onClick={() => setFocus("toEnter")}
         >
           <Heading color="yellow.800" mb={4}>
             To Enter
           </Heading>
           {salesToEnter.map(sale => (
-            <EntryCard
-              config={config}
-              addOrder={addOrder}
-              key={sale.id}
-              sale={sale}
-            />
+            <EntryCard key={sale.id} sheet={sheet} sale={sale} />
           ))}
         </Box>
         <Box
-          ml={["auto", "auto", focus.toAuthorize ? 0 : 4]}
-          mr={["auto", "auto", focus.toAuthorize ? 4 : 0]}
-          order={[-1, -1, focus.toAuthorize ? -1 : 1]}
+          ml={["auto", "auto", 4]}
+          mr={["auto", "auto", 0]}
+          order={[-1, -1, 1]}
           width={["100%", 4 / 5, 1 / 2]}
-          opacity={focus.toAuthorize ? 1 : 0.4}
           onClick={() => setFocus("toAuthorize")}
         >
           {salesToAuthorize.length > 0 && (
@@ -176,7 +163,7 @@ const EntryWorkflow = ({
                 />
               </Flex>
               {salesToAuthorize.map(sale => (
-                <AuthorizeCard key={sale.id} sale={sale} />
+                <AuthorizeCard key={sale.id} sheet={sheet} sale={sale} />
               ))}
             </>
           )}

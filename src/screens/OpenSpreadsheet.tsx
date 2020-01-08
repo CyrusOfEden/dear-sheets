@@ -4,7 +4,7 @@ import { Icon, Text, Box, Heading, Input, Stack, Button } from "@chakra-ui/core"
 
 import { withAuth } from "../auth"
 
-const parseID = new RegExp("/spreadsheets/d/([\\w-_]+)/")
+const parseID = new RegExp("/spreadsheets/d/([a-zA-Z0-9-_]+)/")
 
 const inputStyles = {
   color: "yellow.800",

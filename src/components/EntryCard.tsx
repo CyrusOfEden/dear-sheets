@@ -8,55 +8,47 @@ import { FocusCard } from "./Card"
 import { Sale } from "../api/dear/entities"
 import { useSaleMethods } from "../api/dear/hooks"
 
-import { Config, AddOrderAction } from "../api/sheets"
+import { Sheet } from "../api/sheets/api"
 
 interface SaleCardProps {
   sale: Sale
-  config: Config
-  addOrder: AddOrderAction
+  sheet: Sheet
 }
 
-const SaleCard = ({ sale, config, addOrder, ...props }: SaleCardProps) => {
-  const { markEntered, markUnentered, setSkipped } = useSaleMethods(sale)
+export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
+  const actions = useSaleMethods(sale)
 
   const sheets = useMemo(
-    () => config && Array.from(config.entry.columns.keys()),
-    [config],
+    () => sheet.isLoaded && Array.from(sheet.config.entry.columns.keys()),
+    [sheet],
   )
 
   const [day, _setDay] = useState(null)
   const setDay = useMemo(() => event => _setDay(event.target.value), [_setDay])
 
-  const {
-    bulk: { columns: bulk },
-    retail: { columns: retail },
-  } = config
-
   const enterOrder = useCallback(() => {
+    if (sheet == null) {
+      return
+    }
+
     const skipped = sale.items.filter(
-      product => !bulk.has(product.sku) && !retail.has(product.sku),
+      product => !sheet.config.hasProduct(product.sku),
     )
 
     const operations = [
-      markEntered(day),
-      setSkipped(skipped),
-      addOrder(sale, day),
+      actions.markEntered(day),
+      actions.setSkipped(skipped),
+      sheet.addOrder(sale, day),
     ]
 
-    Promise.all(operations).catch(reason => {
-      console.error(`Unentering sale due to ${reason}`, sale)
-      markUnentered()
+    Promise.all(operations).catch(async reason => {
+      console.error(`Unentering sale due to`, reason)
+      return Promise.all([
+        actions.markUnentered(),
+        sheet.removeOrder(sale, day),
+      ])
     })
-  }, [
-    day,
-    bulk,
-    retail,
-    sale,
-    markEntered,
-    markUnentered,
-    addOrder,
-    setSkipped,
-  ])
+  }, [day, actions, sale, sheet])
 
   return (
     <FocusCard {...props}>
@@ -149,5 +141,3 @@ const SaleCard = ({ sale, config, addOrder, ...props }: SaleCardProps) => {
     </FocusCard>
   )
 }
-
-export default SaleCard

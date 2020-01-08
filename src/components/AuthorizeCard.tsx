@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useCallback } from "react"
 
 import { Stack, Text, Heading, Link, IconButton } from "@chakra-ui/core"
 
@@ -7,8 +7,17 @@ import { Card } from "./Card"
 
 import { useSaleMethods } from "../api/dear/hooks"
 
-const AuthorizeCard = ({ sale, ...props }) => {
+const AuthorizeCard = ({ sale, sheet, ...props }) => {
   const { markUnentered } = useSaleMethods(sale)
+  const removeOrder = useCallback(() => {
+    Promise.all([
+      markUnentered(),
+      sheet.removeOrder(sale, sale.entryDay),
+    ]).catch(reason => {
+      console.error("Unable to remove sale due to", reason)
+    })
+  }, [markUnentered, sale, sheet])
+
   return (
     <Card color="yellow.700" bg="yellow.50" borderColor="yellow.200" {...props}>
       {sale == null || sale.isEmpty ? (
@@ -52,7 +61,7 @@ const AuthorizeCard = ({ sale, ...props }) => {
                 icon="close"
                 onClick={event => {
                   event.stopPropagation()
-                  markUnentered()
+                  removeOrder()
                 }}
                 size="xs"
                 mr={8}
@@ -63,7 +72,7 @@ const AuthorizeCard = ({ sale, ...props }) => {
                 aria-label={`Mark order by ${sale.customer.name} as not entered`}
               />
               <Heading fontWeight="bold" fontSize="lg">
-                {sale.entered}
+                {sale.entryDay}
               </Heading>
             </Stack>
           </Stack>

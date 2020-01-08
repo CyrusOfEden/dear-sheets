@@ -1,6 +1,7 @@
 import React from "react"
 import { Provider } from "react-redux"
 import { createStore, combineReducers, applyMiddleware } from "redux"
+import { composeWithDevTools } from "redux-devtools-extension"
 import promiseMiddleware from "redux-promise"
 
 import firebase from "firebase/app"
@@ -29,10 +30,11 @@ if (firebase.apps.length === 0) {
 const rootReducer = combineReducers({ firebase: firebaseReducer })
 
 const initialState = {}
+
 const store = createStore(
   rootReducer,
   initialState,
-  applyMiddleware(promiseMiddleware),
+  composeWithDevTools(applyMiddleware(promiseMiddleware)),
 )
 
 const firebaseProvider = {

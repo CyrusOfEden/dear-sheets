@@ -1,19 +1,44 @@
 import { useState, useEffect, useMemo } from "react"
 import { useSelector } from "react-redux"
-import { useFirebase, useFirebaseConnect, isLoaded } from "react-redux-firebase"
-
+import { useFirebase, useFirebaseConnect } from "react-redux-firebase"
 import axios from "axios"
+
 import * as Dear from "./entities"
+
+const loadUnfulfilledSaleIDs = async () => {
+  const { data } = await axios.get("https://enn26jnkmnnsctl.m.pipedream.net")
+  return data.saleIDs || []
+}
+
+const cacheSales = async ({ ids, firebase }) => {
+  const snapshot = await firebase.ref("sale").once("value")
+  const cachedIds = new Set(Object.keys(snapshot.val() || {}))
+  console.info(`Cache has ${cachedIds.size} sales`)
+
+  const finalIds = new Set(ids)
+  const idsToLoad = ids.filter(id => !cachedIds.has(id))
+  const idsToRemove = Array.from(cachedIds).filter(id => !finalIds.has(id))
+
+  console.info(`Removing ${idsToRemove.length} sales`)
+  await Promise.all(idsToRemove.map(id => firebase.remove(`sale/${id}`)))
+
+  console.info(`Loading ${idsToLoad.length} sales`)
+  await Promise.all(
+    idsToLoad.map(id =>
+      Dear.Sale.find(id).then(data => firebase.set(`sale/${id}`, data)),
+    ),
+  )
+}
 
 const buildFirebaseActions = firebase => {
   let markAuthorized = sale =>
     firebase.set(`sale/${sale.id}/authorizedAt`, Date.now())
 
   let markEntered = (sale, sheet) =>
-    firebase.set(`sale/${sale.id}/entered`, sheet)
+    firebase.set(`sale/${sale.id}/entryDay`, sheet)
 
   let markUnentered = sale =>
-    firebase.ref(`sale/${sale.id}`).update({ entered: null, skipped: null })
+    firebase.ref(`sale/${sale.id}`).update({ entryDay: null, skipped: null })
 
   let setSkipped = (sale, skipped) =>
     firebase.set(`sale/${sale.id}/skipped`, skipped)
@@ -40,16 +65,6 @@ export const useSaleMethods = sale => {
   }, [firebase, sale])
 }
 
-const delayEffect = (ms, fn) => () => {
-  const timer = setTimeout(fn, ms)
-  return () => clearTimeout(timer)
-}
-
-const loadUnfulfilledSaleIDs = async () => {
-  const { data } = await axios.get("https://enn26jnkmnnsctl.m.pipedream.net")
-  return data.saleIDs || []
-}
-
 export const useSaleList = () => {
   useFirebaseConnect({
     path: "sale",
@@ -57,55 +72,25 @@ export const useSaleList = () => {
   })
   const firebase = useFirebase()
 
-  const [isComplete, setComplete] = useState(false)
-
-  const [ids, setIds] = useState([])
-  const lookup = useSelector(({ firebase }) => firebase.data.sale || {})
-
-  useEffect(
-    function loadSales() {
-      loadUnfulfilledSaleIDs()
-        .then(setIds)
-        .then(() => setComplete(true))
-    },
-    [setComplete, setIds],
-  )
-
-  useEffect(
-    delayEffect(5000, function cleanUnusedOrders() {
-      if (isComplete && isLoaded(lookup)) {
-        const current = new Set(ids)
-        const removedIds = Object.keys(lookup).filter(id => !current.has(id))
-        const operations = removedIds.map(id => firebase.remove(`sale/${id}`))
-        Promise.all(operations).then(() => {
-          console.info("Cleaned up unused sales from Firebase")
-        })
-      }
-    }),
-    [isComplete, firebase, ids, lookup],
-  )
-
-  useEffect(
-    delayEffect(2000, function loadOrders() {
-      if (isComplete && isLoaded(lookup)) {
-        const setCache = id => data => firebase.ref(`sale/${id}`).update(data)
-        const idsToLoad = ids.filter(id => !(id in lookup))
-        const operations = idsToLoad.map(id =>
-          Dear.Sale.find(id).then(setCache(id)),
-        )
-        Promise.all(operations).then(() => {
-          console.info(`Loaded ${idsToLoad.length} sales`)
-        })
-      }
-    }),
-    [isComplete, lookup, ids, firebase],
-  )
+  const [ids, setIds] = useState(null)
+  const [isComplete, setComplete] = useState(null)
 
   const ordered = useSelector(({ firebase }) => firebase.ordered.sale)
   const sales = useMemo(
     () => (ordered || []).map(({ value }) => new Dear.Sale(value)),
     [ordered],
   )
+
+  useEffect(() => {
+    loadUnfulfilledSaleIDs().then(setIds)
+  }, [])
+
+  useEffect(() => {
+    if (ids && isComplete === null) {
+      setComplete(false)
+      cacheSales({ ids, firebase }).then(() => setComplete(true))
+    }
+  }, [firebase, ids, isComplete, setComplete])
 
   const reloadSales = useMemo(
     () => () => {
@@ -135,15 +120,13 @@ export const useSaleList = () => {
   }, [sales])
 
   return {
+    reloadSales,
     sales,
     salesToAuthorize,
     salesToEnter,
-    lookup,
-    reloadSales,
-    isComplete,
     salesCount: {
       loaded: sales.length,
-      total: ids.length,
+      total: ids ? ids.length : null,
     },
   }
 }
