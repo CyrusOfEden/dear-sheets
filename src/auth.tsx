@@ -22,6 +22,8 @@ interface LoginCredentials {
   credential: { oauthAccessToken: string }
 }
 
+const oneHour = 60 * 60 * 1000
+
 export const useGoogleLogin = (): (() => Promise<LoginCredentials>) => {
   const firebase = useFirebase()
   const login = useMemo(
@@ -30,7 +32,7 @@ export const useGoogleLogin = (): (() => Promise<LoginCredentials>) => {
         const { accessToken } = auth.credential as any
         firebase.updateProfile({
           accessToken,
-          accessExpiry: new Date(Date.now() + 60 * 59 * 1000),
+          accessExpiry: Date.now() + oneHour,
         })
         return auth
       }),
@@ -50,8 +52,9 @@ export const withAuth = Component => props => {
 
   useEffect(() => {
     if (isLoaded(user) && isAuthorized && user.accessExpiry) {
-      console.log(`Scheduling login for ${user.accessExpiry}`)
-      const expiresIn = Date.parse(user.accessExpiry) - Date.now()
+      console.log(`Scheduling login for ${new Date(user.accessExpiry)}`)
+      const expiryBuffer = 5 * 60 * 1000 // 5 minutes
+      const expiresIn = user.accessExpiry - Date.now() - expiryBuffer
       const timer = setTimeout(login, expiresIn)
       return () => clearTimeout(timer)
     }

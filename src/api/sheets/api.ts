@@ -14,6 +14,11 @@ export class Sheet {
     this.spreadsheetId = spreadsheetId
   }
 
+  firebasePath = (...parts) => {
+    const base = `sheets/${this.spreadsheetId}`
+    return parts.length ? [base, ...parts].join("/") : base
+  }
+
   get isLoaded() {
     return this.config != null
   }

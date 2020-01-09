@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useContext } from "react"
 import { RouteComponentProps } from "@reach/router"
 
 import {
@@ -13,7 +13,7 @@ import {
 
 import { withAuth } from "../auth"
 import { useSaleList, useSaleActions } from "../api/dear/hooks"
-import { useGoogleSheet } from "../api/sheets/hooks"
+import { useGoogleSheet, SheetContext } from "../api/sheets/hooks"
 
 import LoadingScreen from "./Loading"
 
@@ -72,42 +72,19 @@ const Header = ({ salesCount, reloadSales, location }) => {
   )
 }
 
-const useEnum = (states, initialValue = states[0]) => {
-  const [_value, setValue] = useState(initialValue)
-
-  const value = useMemo(() => {
-    let results = {}
-    for (const state of states) {
-      results[state] = _value === state
-    }
-    return results
-  }, [_value, states])
-
-  return [value as any, setValue]
-}
-
-
-interface EntryWorkflowProps extends RouteComponentProps {
-  spreadsheet: string
-}
-
-function EntryWorkflow({ location, spreadsheet }: EntryWorkflowProps) {
-  const [, setFocus] = useEnum(["toEnter", "toAuthorize"])
-
-  const sheet = useGoogleSheet(spreadsheet)
+function EntryWorkflow({ location }: RouteComponentProps) {
+  const sheet = useContext(SheetContext)
 
   const {
     reloadSales,
     salesCount,
     salesToAuthorize,
     salesToEnter,
-  } = useSaleList()
+  } = useSaleList(sheet)
 
   const { markAuthorized } = useSaleActions()
   const clearAuthorized = useMemo(
-    () => (_: React.MouseEvent) => {
-      salesToAuthorize.forEach(markAuthorized)
-    },
+    () => (_: React.MouseEvent) => salesToAuthorize.forEach(markAuthorized),
     [salesToAuthorize, markAuthorized],
   )
 
@@ -132,7 +109,6 @@ function EntryWorkflow({ location, spreadsheet }: EntryWorkflowProps) {
           ml={["auto", "auto", 0]}
           mr={["auto", "auto", 4]}
           mt={[8, 8, 0]}
-          onClick={() => setFocus("toEnter")}
         >
           <Heading color="yellow.800" mb={4}>
             To Enter
@@ -146,7 +122,6 @@ function EntryWorkflow({ location, spreadsheet }: EntryWorkflowProps) {
           mr={["auto", "auto", 0]}
           order={[-1, -1, 1]}
           width={["100%", 4 / 5, 1 / 2]}
-          onClick={() => setFocus("toAuthorize")}
         >
           {salesToAuthorize.length > 0 && (
             <>
@@ -173,4 +148,19 @@ function EntryWorkflow({ location, spreadsheet }: EntryWorkflowProps) {
   )
 }
 
-export default withAuth(EntryWorkflow)
+interface WorkflowProps extends RouteComponentProps {
+  spreadsheet: string
+}
+
+function Workflow({ spreadsheet, ...props }: WorkflowProps) {
+  const sheet = useGoogleSheet(spreadsheet)
+  return (
+    sheet && (
+      <SheetContext.Provider value={sheet}>
+        <EntryWorkflow {...props} />
+      </SheetContext.Provider>
+    )
+  )
+}
+
+export default withAuth(Workflow)
