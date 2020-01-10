@@ -9,8 +9,6 @@ import {
 
 import LoadingScreen from "./screens/Loading"
 
-import { redirectTo } from "@reach/router"
-
 const config: Credentials = {
   provider: "google",
   type: "popup",
@@ -28,16 +26,15 @@ export const useGoogleLogin = (): (() => Promise<LoginCredentials>) => {
   const firebase = useFirebase()
   const login = useMemo(
     () => () =>
-      firebase.login(config).then(async auth => {
+      firebase.login(config).then(auth => {
         const { accessToken } = auth.credential as any
-        firebase.updateProfile({
-          accessToken,
-          accessExpiry: Date.now() + oneHour,
-        })
+        const accessExpiry = Date.now() + oneHour
+        firebase.updateProfile({ accessToken, accessExpiry })
         return auth
       }),
     [firebase],
   )
+
   return (login as unknown) as () => Promise<LoginCredentials>
 }
 
@@ -51,12 +48,15 @@ export const withAuth = Component => props => {
   const [user, isAuthorized] = useAuth()
 
   useEffect(() => {
-    if (isLoaded(user) && isAuthorized && user.accessExpiry) {
+    const loaded = isLoaded(user)
+    if (loaded && isAuthorized) {
       console.log(`Scheduling login for ${new Date(user.accessExpiry)}`)
       const expiryBuffer = 5 * 60 * 1000 // 5 minutes
       const expiresIn = user.accessExpiry - Date.now() - expiryBuffer
       const timer = setTimeout(login, expiresIn)
       return () => clearTimeout(timer)
+    } else if (loaded && isEmpty(user)) {
+      login()
     }
   }, [user, isAuthorized, login])
 
@@ -65,7 +65,7 @@ export const withAuth = Component => props => {
   }
 
   if (!isAuthorized) {
-    return redirectTo("/login")
+    return <LoadingScreen message="Please login" />
   }
 
   return <Component auth={user} {...props} />
