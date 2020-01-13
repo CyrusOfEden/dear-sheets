@@ -46,7 +46,7 @@ export const addToDaySheet = async ({ sale, weekDay, sheet }) => {
 
   const enter = (row, values) => {
     values[0] = sale.invoice.number
-    values[1] = sale.customer.name
+    values[1] = (sale.isRetail ? "RET " : "") + sale.customer.name
     return sheet.updateRows(`${weekDay}!A${row}:AH${row}`, values)
   }
 
@@ -156,15 +156,14 @@ const addRowFinder = async ({ sale, weekDay, sheet }) => {
 const partitionItems = ({ sale, config }) => {
   let bulk = { values: emptyRow(), anyItems: false }
   let retail = { values: emptyRow(), anyItems: false }
+
   for (const item of sale.items) {
     const bulkColumn = config.bulk.columns.get(item.sku)
+    const retailColumn = config.retail.columns.get(item.sku)
     if (bulkColumn != null) {
       bulk.anyItems = true
       bulk.values[columnToIndex(bulkColumn)] = item.quantity
-      continue
-    }
-    const retailColumn = config.retail.columns.get(item.sku)
-    if (retailColumn != null) {
+    } else if (retailColumn != null) {
       retail.anyItems = true
       retail.values[columnToIndex(retailColumn)] = item.quantity
     }

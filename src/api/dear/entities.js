@@ -1,5 +1,4 @@
 import PromiseThrottler from "promise-throttle"
-
 import axios from "axios"
 import memoize from "lodash/memoize"
 
@@ -83,6 +82,10 @@ export class Sale extends APIResponseWrapper {
   get customer() {
     const { Customer: name, CustomerID: id } = this
     return { name, id }
+  }
+
+  get isRetail() {
+    return this.CustomerReference.startsWith("RET-")
   }
 
   get invoice() {
