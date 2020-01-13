@@ -1,8 +1,8 @@
-import axios from "axios"
-import _ from "lodash"
-
 import * as Dear from "../dear/entities"
 import * as actions from "./actions"
+
+import _ from "lodash"
+import axios from "axios"
 
 export class Sheet {
   accessToken: string
@@ -14,7 +14,7 @@ export class Sheet {
     this.spreadsheetId = spreadsheetId
   }
 
-  firebasePath = (...parts) => {
+  firebasePath = (...parts: string[]) => {
     const base = `sheets/${this.spreadsheetId}`
     return parts.length ? [base, ...parts].join("/") : base
   }
@@ -88,8 +88,9 @@ export class Config {
     this.bulk.columns.has(sku) || this.retail.columns.has(sku)
 }
 
-const parseConfig = values => {
-  const parseRows = str => str.match(/\d+/g).map(n => parseInt(n))
+const parseConfig = (values: string[][]) => {
+  const parseRows = (str: string) =>
+    str.match(/\d+/g).map((n: string) => parseInt(n))
 
   const [, , ...coffeeColumns] = values[2]
 

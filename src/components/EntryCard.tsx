@@ -1,14 +1,11 @@
-import React, { useState, useMemo, useCallback } from "react"
+import { Box, IconButton, Link, Stack, Text } from "@chakra-ui/core"
+import { Product, Sale } from "../api/dear/entities"
+import React, { useCallback, useMemo, useState } from "react"
 
-import { Box, Stack, Text, Link, IconButton } from "@chakra-ui/core"
-
-import LoadingSpinner from "./LoadingSpinner"
 import { FocusCard } from "./Card"
-
-import { Sale } from "../api/dear/entities"
-import { useSaleMethods } from "../api/dear/hooks"
-
+import LoadingSpinner from "./LoadingSpinner"
 import { Sheet } from "../api/sheets/api"
+import { useSaleMethods } from "../api/dear/hooks"
 
 interface SaleCardProps {
   sale: Sale
@@ -32,7 +29,7 @@ export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
     }
 
     const skipped = sale.items.filter(
-      product => !sheet.config.hasProduct(product.sku),
+      (product: Product) => !sheet.config.hasProduct(product.sku),
     )
 
     const operations = [
@@ -52,7 +49,7 @@ export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
 
   return (
     <FocusCard {...props}>
-      {isFocused =>
+      {(isFocused: boolean) =>
         sale == null ? (
           <LoadingSpinner size="md" mt={2} ml={4} />
         ) : (
