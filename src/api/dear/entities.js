@@ -80,12 +80,16 @@ export class Sale extends APIResponseWrapper {
   }
 
   get customer() {
-    const { Customer: name, CustomerID: id } = this
-    return { name, id }
+    let { CustomerID: id, Customer: name } = this
+    name = name.trim()
+    if (this.isRetail) {
+      name = "RET " + name
+    }
+    return { id, name }
   }
 
   get isRetail() {
-    return this.CustomerReference.startsWith("RET-")
+    return !!this.CustomerReference?.startsWith("RET-")
   }
 
   get invoice() {

@@ -46,7 +46,7 @@ export const addToDaySheet = async ({ sale, weekDay, sheet }) => {
 
   const enter = (row, values) => {
     values[0] = sale.invoice.number
-    values[1] = ((sale.isRetail ? "RET " : "") + sale.customer.name).trim()
+    values[1] = sale.customer.name
     return sheet.updateRows(`${weekDay}!A${row}:AH${row}`, values)
   }
 
