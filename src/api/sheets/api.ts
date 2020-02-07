@@ -55,17 +55,21 @@ export class Sheet {
     return this.config
   }
 
-  addOrder = (sale: Dear.Sale, weekDay: string) =>
-    Promise.all([
-      actions.addToEntrySheet({ sale, weekDay, sheet: this }),
-      actions.addToDaySheet({ sale, weekDay, sheet: this }),
+  addOrder = (sale: Dear.Sale, weekDay: string) => {
+    const params = { sale, weekDay, sheet: this }
+    return Promise.all([
+      actions.addToEntrySheet(params),
+      actions.addToDaySheet(params),
     ])
+  }
 
-  removeOrder = (sale: Dear.Sale, weekDay: string) =>
-    Promise.all([
-      actions.removeFromEntrySheet({ sale, weekDay, sheet: this }),
-      actions.removeFromDaySheet({ sale, weekDay, sheet: this }),
+  removeOrder = (sale: Dear.Sale, weekDay: string) => {
+    const params = { sale, weekDay, sheet: this }
+    return Promise.all([
+      actions.removeFromEntrySheet(params),
+      actions.removeFromDaySheet(params),
     ])
+  }
 }
 
 type RowConfig = [number, number]

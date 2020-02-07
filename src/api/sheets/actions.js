@@ -176,6 +176,7 @@ const partitionItems = ({ sale, config }) => {
 }
 
 const columnToIndex = column =>
-  Array.from(column).reduce((i, char) => i + char.charCodeAt(0) - 65, 0)
+  Array.from(column).reduce((i, char) => i + char.charCodeAt(0) - 65, 0) +
+  26 * (column.length - 1)
 
 const emptyRow = () => new Array(28).fill("")
