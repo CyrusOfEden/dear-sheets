@@ -1,13 +1,14 @@
-import React, { useMemo, useEffect } from "react"
-import { useSelector } from "react-redux"
+import { AuthCredential, UserCredential } from "@firebase/auth-types"
 import {
   Credentials,
   isEmpty,
   isLoaded,
   useFirebase,
 } from "react-redux-firebase"
+import React, { useEffect, useMemo } from "react"
 
 import LoadingScreen from "./screens/Loading"
+import { useSelector } from "react-redux"
 
 const config: Credentials = {
   provider: "google",
@@ -15,19 +16,31 @@ const config: Credentials = {
   scopes: ["email", "https://www.googleapis.com/auth/spreadsheets"],
 }
 
-interface LoginCredentials {
-  profile: { email: string; avatarUrl: string; displayName: string }
-  credential: { oauthAccessToken: string }
+export interface UserProfile {
+  accessExpiry?: number
+  accessToken?: string
+  avatarUrl: string
+  disabled: boolean
+  displayName: string
+  email: string
+}
+
+type LoginCredentials = UserCredential & {
+  credential: AuthCredential & {
+    idToken: string
+    accessToken: string
+  }
+  profile: UserProfile
 }
 
 const oneHour = 60 * 60 * 1000
 
-export const useGoogleLogin = (): (() => Promise<LoginCredentials>) => {
+export const useGoogleLogin = () => {
   const firebase = useFirebase()
   const login = useMemo(
     () => () =>
-      firebase.login(config).then(auth => {
-        const { accessToken } = auth.credential as any
+      firebase.login(config).then((auth: LoginCredentials) => {
+        const { accessToken } = auth.credential
         const accessExpiry = Date.now() + oneHour
         firebase.updateProfile({ accessToken, accessExpiry })
         return auth
@@ -35,12 +48,13 @@ export const useGoogleLogin = (): (() => Promise<LoginCredentials>) => {
     [firebase],
   )
 
-  return (login as unknown) as () => Promise<LoginCredentials>
+  return login
 }
 
 export const useAuth = () => {
   const user = useSelector(({ firebase: { profile } }) => profile)
-  return [user, isLoaded(user) && !isEmpty(user) && !user.disabled]
+  const isAuthorized = isLoaded(user) && !isEmpty(user) && !user.disabled
+  return [user, isAuthorized] as [UserProfile, boolean]
 }
 
 export const withAuth = Component => props => {

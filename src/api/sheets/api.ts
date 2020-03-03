@@ -1,6 +1,7 @@
 import * as Dear from "../dear/entities"
 import * as actions from "./actions"
 
+import { UserProfile } from "../../auth"
 import _ from "lodash"
 import axios from "axios"
 
@@ -9,17 +10,23 @@ export class Sheet {
   spreadsheetId: string
   config: Config
 
-  constructor({ user, spreadsheetId }) {
+  constructor({
+    user,
+    spreadsheetId,
+  }: {
+    user: UserProfile
+    spreadsheetId: string
+  }) {
     this.accessToken = user.accessToken
     this.spreadsheetId = spreadsheetId
   }
 
-  firebasePath = (...parts: string[]) => {
+  firebasePath = (...parts: string[]): string => {
     const base = `sheets/${this.spreadsheetId}`
     return parts.length ? [base, ...parts].join("/") : base
   }
 
-  get isLoaded() {
+  get isLoaded(): boolean {
     return this.config != null
   }
 
@@ -34,7 +41,7 @@ export class Sheet {
     })
   }
 
-  updateRows = (range, values) =>
+  updateRows = (range: string, values: string[]) =>
     this.request(range, {
       method: "put",
       params: {
@@ -42,7 +49,7 @@ export class Sheet {
       },
       data: {
         range,
-        values: [values],
+        values: [Array.from(values)],
         majorDimension: "ROWS",
       },
     })
@@ -72,17 +79,18 @@ export class Sheet {
   }
 }
 
-type RowConfig = [number, number]
-type ProductTypeConfig = {
+export type RowConfig = [number, number]
+export type ProductType = "bulk" | "retail" | "sample"
+export type EntryConfig = {
   rows: RowConfig
   columns: Map<string, string>
 }
 
 export class Config {
-  bulk: ProductTypeConfig
-  retail: ProductTypeConfig
-  entry: ProductTypeConfig
-  sample: ProductTypeConfig
+  bulk: EntryConfig
+  retail: EntryConfig
+  sample: EntryConfig
+  entry: EntryConfig
 
   hasProduct = (sku: string) =>
     this.bulk.columns.has(sku) ||
@@ -90,12 +98,12 @@ export class Config {
     this.sample.columns.has(sku)
 }
 
-const parseConfig = (values: string[][]) => {
+const parseConfig = (values: string[][]): Config => {
   const parseProductTypeConfig = (
     header: string,
     keys: string[],
     values: string[],
-  ): ProductTypeConfig => {
+  ): EntryConfig => {
     const [start, end] = header.match(/\d+/g).map((n: string) => parseInt(n))
     return {
       rows: [start, end],
@@ -103,19 +111,29 @@ const parseConfig = (values: string[][]) => {
     }
   }
 
+  const config = new Config()
+
   const [bulkHeader, , ...bulkSkus] = values[0]
   const [retailHeader, , ...retailSkus] = values[1]
   const [sampleHeader, , ...sampleSkus] = values[2]
   const [, , ...coffeeColumns] = values[3]
 
-  const bulk = parseProductTypeConfig(bulkHeader, bulkSkus, coffeeColumns)
-  const retail = parseProductTypeConfig(retailHeader, retailSkus, coffeeColumns)
-  const sample = parseProductTypeConfig(sampleHeader, sampleSkus, coffeeColumns)
+  config.bulk = parseProductTypeConfig(bulkHeader, bulkSkus, coffeeColumns)
+  config.retail = parseProductTypeConfig(
+    retailHeader,
+    retailSkus,
+    coffeeColumns,
+  )
+  config.sample = parseProductTypeConfig(
+    sampleHeader,
+    sampleSkus,
+    coffeeColumns,
+  )
 
   const [entryHeader, , ...sheets] = values[9]
   const [, , ...sheetColumns] = values[10]
 
-  const entry = parseProductTypeConfig(entryHeader, sheets, sheetColumns)
+  config.entry = parseProductTypeConfig(entryHeader, sheets, sheetColumns)
 
-  return Object.assign(new Config(), { entry, bulk, retail, sample })
+  return config
 }
