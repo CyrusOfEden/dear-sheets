@@ -41,9 +41,6 @@ export const removeFromEntrySheet = async ({ sale, weekDay, sheet }) => {
 }
 
 export const addToDaySheet = async ({ sale, weekDay, sheet }) => {
-  const { config } = sheet
-  const { bulk, retail } = partitionItems({ sale, config })
-
   const enter = (row, values) => {
     values[0] = sale.invoice.number
     values[1] = sale.customer.name
@@ -52,39 +49,36 @@ export const addToDaySheet = async ({ sale, weekDay, sheet }) => {
 
   const findEntryRow = await addRowFinder({ sale, weekDay, sheet })
 
-  let operations = []
-  if (bulk.anyItems) {
-    const row = findEntryRow(config.bulk.rows)
-    operations.push(enter(row, bulk.values))
-  }
-  if (retail.anyItems) {
-    const row = findEntryRow(config.retail.rows)
-    operations.push(enter(row, retail.values))
+  const { config } = sheet
+  const items = partitionItems({ sale, config })
+
+  const operations = [
+    enter(findEntryRow(config.bulk.rows), Array.from(items.bulk)),
+    enter(findEntryRow(config.retail.rows), Array.from(items.retail)),
+  ]
+
+  if (items.sample.any) {
+    operations.push(
+      enter(findEntryRow(config.sample.rows), Array.from(items.sample)),
+    )
   }
 
   return Promise.all(operations)
 }
 
 export const removeFromDaySheet = async ({ sale, weekDay, sheet }) => {
-  const { config } = sheet
-  const { bulk, retail } = partitionItems({ sale, config })
-
   const remove = row =>
-    sheet.updateRows(`${weekDay}!A${row}:AH${row}`, emptyRow())
+    row && sheet.updateRows(`${weekDay}!A${row}:AH${row}`, emptyRow())
 
-  const findEntryRow = await removeRowFinder({ sale, weekDay, sheet })
+  const findRemoveRow = await removeRowFinder({ sale, weekDay, sheet })
 
-  let operations = []
-  if (bulk.anyItems) {
-    const row = findEntryRow(config.bulk.rows)
-    operations.push(remove(row))
-  }
-  if (retail.anyItems) {
-    const row = findEntryRow(config.retail.rows)
-    operations.push(remove(row))
-  }
+  const { config } = sheet
 
-  return Promise.all(operations)
+  return Promise.all([
+    remove(findRemoveRow(config.bulk.rows)),
+    remove(findRemoveRow(config.retail.rows)),
+    remove(findRemoveRow(config.sample.rows)),
+  ])
 }
 
 const removeRowFinder = async ({ sale, weekDay, sheet }) => {
@@ -154,25 +148,32 @@ const addRowFinder = async ({ sale, weekDay, sheet }) => {
 }
 
 const partitionItems = ({ sale, config }) => {
-  let bulk = { values: emptyRow(), anyItems: false }
-  let retail = { values: emptyRow(), anyItems: false }
+  let bulk = emptyRow()
+  let retail = emptyRow()
+  let sample = emptyRow()
 
   for (const item of sale.items) {
     const bulkColumn = config.bulk.columns.get(item.sku)
     if (bulkColumn != null) {
-      bulk.anyItems = true
-      bulk.values[columnToIndex(bulkColumn)] = item.quantity
+      bulk[columnToIndex(bulkColumn)] = item.quantity
+      bulk.any = true
       continue
     }
     const retailColumn = config.retail.columns.get(item.sku)
     if (retailColumn != null) {
-      retail.anyItems = true
-      retail.values[columnToIndex(retailColumn)] = item.quantity
+      retail[columnToIndex(retailColumn)] = item.quantity
+      retail.any = true
+      continue
+    }
+    const sampleColumn = config.sample.columns.get(item.sku)
+    if (sampleColumn != null) {
+      sample[columnToIndex(sampleColumn)] = item.quantity
+      sample.any = true
       continue
     }
   }
 
-  return { bulk, retail }
+  return { bulk, retail, sample }
 }
 
 const columnToIndex = column =>

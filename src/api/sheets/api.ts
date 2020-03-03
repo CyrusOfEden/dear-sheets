@@ -73,52 +73,49 @@ export class Sheet {
 }
 
 type RowConfig = [number, number]
+type ProductTypeConfig = {
+  rows: RowConfig
+  columns: Map<string, string>
+}
 
 export class Config {
-  bulk: {
-    rows: RowConfig
-    columns: Map<string, string>
-  }
-  retail: {
-    rows: RowConfig
-    columns: Map<string, string>
-  }
-  entry: {
-    rows: RowConfig
-    columns: Map<string, string>
-  }
+  bulk: ProductTypeConfig
+  retail: ProductTypeConfig
+  entry: ProductTypeConfig
+  sample: ProductTypeConfig
 
   hasProduct = (sku: string) =>
-    this.bulk.columns.has(sku) || this.retail.columns.has(sku)
+    this.bulk.columns.has(sku) ||
+    this.retail.columns.has(sku) ||
+    this.sample.columns.has(sku)
 }
 
 const parseConfig = (values: string[][]) => {
-  const parseRows = (str: string) =>
-    str.match(/\d+/g).map((n: string) => parseInt(n))
-
-  const [, , ...coffeeColumns] = values[2]
+  const parseProductTypeConfig = (
+    header: string,
+    keys: string[],
+    values: string[],
+  ): ProductTypeConfig => {
+    const [start, end] = header.match(/\d+/g).map((n: string) => parseInt(n))
+    return {
+      rows: [start, end],
+      columns: new Map(_.zip(keys, values)),
+    }
+  }
 
   const [bulkHeader, , ...bulkSkus] = values[0]
-
-  const bulk = {
-    rows: parseRows(bulkHeader),
-    columns: new Map(_.zip(bulkSkus, coffeeColumns)),
-  }
-
   const [retailHeader, , ...retailSkus] = values[1]
+  const [sampleHeader, , ...sampleSkus] = values[2]
+  const [, , ...coffeeColumns] = values[3]
 
-  const retail = {
-    rows: parseRows(retailHeader),
-    columns: new Map(_.zip(retailSkus, coffeeColumns)),
-  }
+  const bulk = parseProductTypeConfig(bulkHeader, bulkSkus, coffeeColumns)
+  const retail = parseProductTypeConfig(retailHeader, retailSkus, coffeeColumns)
+  const sample = parseProductTypeConfig(sampleHeader, sampleSkus, coffeeColumns)
 
-  const [entryHeader, , ...sheets] = values[8]
-  const [, , ...sheetColumns] = values[9]
+  const [entryHeader, , ...sheets] = values[9]
+  const [, , ...sheetColumns] = values[10]
 
-  const entry = {
-    rows: parseRows(entryHeader),
-    columns: new Map(_.zip(sheets, sheetColumns)),
-  }
+  const entry = parseProductTypeConfig(entryHeader, sheets, sheetColumns)
 
-  return Object.assign(new Config(), { entry, bulk, retail })
+  return Object.assign(new Config(), { entry, bulk, retail, sample })
 }
