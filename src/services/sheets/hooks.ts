@@ -2,7 +2,7 @@ import { ExtendedFirebaseInstance, useFirebase } from "react-redux-firebase"
 import { createContext, useEffect, useState } from "react"
 
 import { Sheet } from "./api"
-import { useAuth } from "../../auth"
+import { useAuth } from "../Auth"
 
 export const SheetContext = createContext(null)
 

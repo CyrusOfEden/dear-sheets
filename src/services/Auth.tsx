@@ -7,7 +7,7 @@ import {
 } from "react-redux-firebase"
 import React, { useEffect, useMemo } from "react"
 
-import LoadingScreen from "./screens/Loading"
+import LoadingScreen from "../screens/Loading"
 import { useSelector } from "react-redux"
 
 const config: Credentials = {

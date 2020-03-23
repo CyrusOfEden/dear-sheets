@@ -1,7 +1,7 @@
 import * as Dear from "../dear/entities"
 import * as actions from "./actions"
 
-import { UserProfile } from "../../auth"
+import { UserProfile } from "../Auth"
 import _ from "lodash"
 import axios from "axios"
 

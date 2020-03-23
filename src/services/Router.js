@@ -1,9 +1,9 @@
-import React from "react"
 import * as Reach from "@reach/router"
 
-import Login from "./Login"
-import EntryWorkflow from "./EntryWorkflow"
-import OpenSpreadsheet from "./OpenSpreadsheet"
+import EntryWorkflow from "../screens/EntryWorkflow"
+import Login from "../screens/Login"
+import OpenSpreadsheet from "../screens/OpenSpreadsheet"
+import React from "react"
 
 export const Router = () => (
   <Reach.Router>

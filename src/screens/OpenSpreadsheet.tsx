@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useRef } from "react"
-import { RouteComponentProps } from "@reach/router"
-import { Icon, Text, Box, Heading, Input, Stack, Button } from "@chakra-ui/core"
+import { Box, Button, Heading, Icon, Input, Stack, Text } from "@chakra-ui/core"
+import React, { useCallback, useRef, useState } from "react"
 
-import { withAuth } from "../auth"
+import { RouteComponentProps } from "@reach/router"
+import { withAuth } from "../services/Auth"
 
 const parseID = new RegExp("/spreadsheets/d/([a-zA-Z0-9-_]+)/")
 

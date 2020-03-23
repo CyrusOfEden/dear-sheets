@@ -1,6 +1,3 @@
-import React, { useMemo, useContext } from "react"
-import { RouteComponentProps } from "@reach/router"
-
 import {
   Box,
   Flex,
@@ -10,15 +7,15 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/core"
+import React, { useContext, useMemo } from "react"
+import { SheetContext, useGoogleSheet } from "../services/sheets/hooks"
+import { useSaleActions, useSaleList } from "../services/dear/hooks"
 
-import { withAuth } from "../auth"
-import { useSaleList, useSaleActions } from "../api/dear/hooks"
-import { useGoogleSheet, SheetContext } from "../api/sheets/hooks"
-
-import LoadingScreen from "./Loading"
-
-import EntryCard from "../components/EntryCard"
 import AuthorizeCard from "../components/AuthorizeCard"
+import EntryCard from "../components/EntryCard"
+import LoadingScreen from "./Loading"
+import { RouteComponentProps } from "@reach/router"
+import { withAuth } from "../services/Auth"
 
 const HeaderIconButton = ({ label, name, ...props }) => (
   <IconButton aria-label={label} icon={name} {...props} />

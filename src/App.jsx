@@ -1,16 +1,14 @@
-import React from "react"
-
 import {
   Box,
   CSSReset,
   Stack,
-  theme as chakra,
   ThemeProvider,
+  theme as chakra,
 } from "@chakra-ui/core"
 
 import { FirebaseStore } from "./redux-firebase"
-
-import { Router } from "./screens/routes"
+import React from "react"
+import { Router } from "./services/Router"
 
 const theme = {
   ...chakra,

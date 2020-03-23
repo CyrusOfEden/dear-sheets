@@ -1,9 +1,8 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react"
+import { Box, Button, Heading } from "@chakra-ui/core"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
+import { useAuth, useGoogleLogin } from "../services/Auth"
+
 import { RouteComponentProps } from "@reach/router"
-
-import { Button, Box, Heading } from "@chakra-ui/core"
-
-import { useAuth, useGoogleLogin } from "../auth"
 
 const weeknames = "Sunday Monday Tuesday Wednesday Thursday Friday Saturday".split(
   " ",

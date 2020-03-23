@@ -1,11 +1,9 @@
+import { Heading, IconButton, Link, Stack, Text } from "@chakra-ui/core"
 import React, { useCallback } from "react"
 
-import { Stack, Text, Heading, Link, IconButton } from "@chakra-ui/core"
-
-import LoadingSpinner from "./LoadingSpinner"
 import { Card } from "./Card"
-
-import { useSaleMethods } from "../api/dear/hooks"
+import LoadingSpinner from "./LoadingSpinner"
+import { useSaleMethods } from "../services/dear/hooks"
 
 const AuthorizeCard = ({ sale, sheet, ...props }) => {
   const { markUnentered } = useSaleMethods(sale)

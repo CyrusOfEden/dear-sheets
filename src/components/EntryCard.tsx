@@ -1,11 +1,11 @@
 import { Box, IconButton, Link, Stack, Text } from "@chakra-ui/core"
-import { Product, Sale } from "../api/dear/entities"
+import { Product, Sale } from "../services/dear/entities"
 import React, { useCallback, useMemo, useState } from "react"
 
 import { FocusCard } from "./Card"
 import LoadingSpinner from "./LoadingSpinner"
-import { Sheet } from "../api/sheets/api"
-import { useSaleMethods } from "../api/dear/hooks"
+import { Sheet } from "../services/sheets/api"
+import { useSaleMethods } from "../services/dear/hooks"
 
 interface SaleCardProps {
   sale: Sale
