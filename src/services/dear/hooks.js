@@ -1,11 +1,11 @@
-import { useContext, useState, useEffect, useMemo } from "react"
-import { useSelector } from "react-redux"
-import { useFirebase, useFirebaseConnect } from "react-redux-firebase"
-import axios from "axios"
-
 import * as Dear from "./entities"
 
+import { useContext, useEffect, useMemo, useState } from "react"
+import { useFirebase, useFirebaseConnect } from "react-redux-firebase"
+
 import { SheetContext } from "../sheets/hooks"
+import axios from "axios"
+import { useSelector } from "react-redux"
 
 const loadUnfulfilledSaleIDs = async () => {
   const { data } = await axios.get("https://enn26jnkmnnsctl.m.pipedream.net")
@@ -81,15 +81,11 @@ export const useSaleList = sheet => {
   const [ids, setIds] = useState(null)
   const [isComplete, setComplete] = useState(null)
 
-  const ordered = useSelector(({ firebase }) => {
+  const sales = useSelector(({ firebase }) => {
     const sheets = firebase.ordered.sheets
     const data = sheets && sheets[sheet.spreadsheetId]
-    return data ? data.sales : []
+    return (data ? data.sales : []).map(({ value }) => new Dear.Sale(value))
   })
-  const sales = useMemo(
-    () => (ordered || []).map(({ value }) => new Dear.Sale(value)),
-    [ordered],
-  )
 
   useEffect(() => {
     loadUnfulfilledSaleIDs().then(ids => {

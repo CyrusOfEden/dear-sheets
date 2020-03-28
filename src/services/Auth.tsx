@@ -37,6 +37,7 @@ const oneHour = 60 * 60 * 1000
 
 export const useGoogleLogin = () => {
   const firebase = useFirebase()
+
   const login = useMemo(
     () => () =>
       firebase.login(config).then((auth: LoginCredentials) => {
@@ -62,14 +63,13 @@ export const withAuth = Component => props => {
   const [user, isAuthorized] = useAuth()
 
   useEffect(() => {
-    const loaded = isLoaded(user)
-    if (loaded && isAuthorized) {
+    if (isAuthorized) {
       console.log(`Scheduling login for ${new Date(user.accessExpiry)}`)
       const expiryBuffer = 5 * 60 * 1000 // 5 minutes
       const expiresIn = user.accessExpiry - Date.now() - expiryBuffer
       const timer = setTimeout(login, expiresIn)
       return () => clearTimeout(timer)
-    } else if (loaded && isEmpty(user)) {
+    } else if (isLoaded(user) && isEmpty(user)) {
       login()
     }
   }, [user, isAuthorized, login])

@@ -99,18 +99,6 @@ export class Config {
 }
 
 const parseConfig = (values: string[][]): Config => {
-  const parseProductTypeConfig = (
-    header: string,
-    keys: string[],
-    values: string[],
-  ): EntryConfig => {
-    const [start, end] = header.match(/\d+/g).map((n: string) => parseInt(n))
-    return {
-      rows: [start, end],
-      columns: new Map(_.zip(keys, values)),
-    }
-  }
-
   const config = new Config()
 
   const [bulkHeader, , ...bulkSkus] = values[0]
@@ -136,4 +124,16 @@ const parseConfig = (values: string[][]): Config => {
   config.entry = parseProductTypeConfig(entryHeader, sheets, sheetColumns)
 
   return config
+}
+
+const parseProductTypeConfig = (
+  header: string,
+  keys: string[],
+  values: string[],
+): EntryConfig => {
+  const [start, end] = header.match(/\d+/g).map((n: string) => parseInt(n))
+  return {
+    rows: [start, end],
+    columns: new Map(_.zip(keys, values)),
+  }
 }

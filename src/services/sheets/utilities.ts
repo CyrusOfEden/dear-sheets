@@ -71,11 +71,13 @@ const findRow = (predicate: RowFinderPredicate) => async (
 
 export const addRowFinder = findRow(
   ({ sale }, { invoiceCode, accountName }) =>
-    !accountName || !invoiceCode || accountName === sale.customer.name,
+    !accountName ||
+    !invoiceCode ||
+    (accountName === sale.customer.name &&
+      (!invoiceCode || invoiceCode === sale.invoice.number)),
 )
 
 export const removeRowFinder = findRow(
   ({ sale }, { invoiceCode, accountName }) =>
-    invoiceCode === sale.invoice.number.toString() &&
-    accountName === sale.customer.name,
+    invoiceCode === sale.invoice.number && accountName === sale.customer.name,
 )
