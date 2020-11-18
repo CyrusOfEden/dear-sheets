@@ -1,13 +1,13 @@
-import PromiseThrottler from "promise-throttle"
 import axios from "axios"
 import memoize from "lodash/memoize"
+import PromiseThrottler from "promise-throttle"
 
 const rateLimiter = new PromiseThrottler({
   requestsPerSecond: 1,
   promiseImplementation: Promise,
 })
 
-const rpc = data =>
+const rpc = (data) =>
   rateLimiter.add(() =>
     axios.post("https://en1b7j297hdg82f.m.pipedream.net", data),
   )
@@ -46,7 +46,7 @@ export class SaleList {
       throw new Error(`Invalid query ${params}`)
     }
     const { data } = await this.request({ params, method: "get" })
-    return data.SaleList.map(data => new Sale(data))
+    return data.SaleList.map((data) => new Sale(data))
   }
 
   static async all(params) {
@@ -66,7 +66,7 @@ export class SaleList {
       page += 1
       results = results.concat(data.SaleList)
     } while (results.length < total)
-    return results.map(data => new Sale(data))
+    return results.map((data) => new Sale(data))
   }
 }
 
@@ -112,12 +112,12 @@ export class Sale extends APIResponseWrapper {
 
   get items() {
     return ((this.Order && this.Order.Lines) || []).map(
-      data => new Product(data),
+      (data) => new Product(data),
     )
   }
 
   get unenteredItems() {
-    return (this.skipped || []).map(data => new Product(data))
+    return (this.skipped || []).map((data) => new Product(data))
   }
 
   get enteredItems() {
@@ -125,7 +125,7 @@ export class Sale extends APIResponseWrapper {
     for (const product of this.unenteredItems) {
       unentered[product.sku] = true
     }
-    return this.items.filter(product => unentered[product.sku] === undefined)
+    return this.items.filter((product) => unentered[product.sku] === undefined)
   }
 
   get notes() {
@@ -142,11 +142,12 @@ export class Sale extends APIResponseWrapper {
   }
 
   get orderDate() {
-    return new Date(this.SaleOrderDate)
+    const date = new Date(this.SaleOrderDate)
+    return date.getUTCMonth() + 1 + "/" + date.getUTCDate()
   }
 }
 
-Sale.find = memoize(async function(id) {
+Sale.find = memoize(async function (id) {
   if (id == null) {
     throw new Error(`Invalid id=${id}`)
   }

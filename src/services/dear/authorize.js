@@ -1,3 +1,6 @@
+import axios from "axios"
+import _ from "lodash"
+
 async function authorize(sale) {
   switch (sale.Status) {
     case "ORDERED":
@@ -6,6 +9,8 @@ async function authorize(sale) {
       return pack(sale).then(authorize)
     case "PACKED":
       return ship(sale)
+    default:
+      throw new Error("Unexpected state")
   }
 }
 

@@ -1,11 +1,10 @@
-import * as Dear from "./entities"
-
+import axios from "axios"
 import { useContext, useEffect, useMemo, useState } from "react"
+import { useSelector } from "react-redux"
 import { useFirebase, useFirebaseConnect } from "react-redux-firebase"
 
 import { SheetContext } from "../sheets/hooks"
-import axios from "axios"
-import { useSelector } from "react-redux"
+import * as Dear from "./entities"
 
 const loadUnfulfilledSaleIDs = async () => {
   const { data } = await axios.get("https://enn26jnkmnnsctl.m.pipedream.net")
@@ -19,14 +18,14 @@ const cacheSales = async ({ ids, sheet, firebase }) => {
   console.info(`Cache has ${cachedIds.size} sales`)
 
   const finalIds = new Set(ids)
-  const idsToLoad = ids.filter(id => !cachedIds.has(id))
-  const idsToRemove = Array.from(cachedIds).filter(id => !finalIds.has(id))
+  const idsToLoad = ids.filter((id) => !cachedIds.has(id))
+  const idsToRemove = Array.from(cachedIds).filter((id) => !finalIds.has(id))
 
   console.info(`Removing ${idsToRemove.length} sales`)
-  await Promise.all(idsToRemove.map(id => firebase.remove(`${root}/${id}`)))
+  await Promise.all(idsToRemove.map((id) => firebase.remove(`${root}/${id}`)))
 
-  const cacheSale = id =>
-    Dear.Sale.find(id).then(data => {
+  const cacheSale = (id) =>
+    Dear.Sale.find(id).then((data) => {
       console.info(`Loaded ${id}`)
       return firebase.set(`${root}/${id}`, data)
     })
@@ -37,13 +36,13 @@ const cacheSales = async ({ ids, sheet, firebase }) => {
 const buildFirebaseActions = (firebase, sheet) => {
   const root = sheet.firebasePath("sales")
 
-  let markAuthorized = sale =>
+  let markAuthorized = (sale) =>
     firebase.set(`${root}/${sale.id}/authorizedAt`, Date.now())
 
   let markEntered = (sale, sheet) =>
     firebase.set(`${root}/${sale.id}/entryDay`, sheet)
 
-  let markUnentered = sale =>
+  let markUnentered = (sale) =>
     firebase.ref(`${root}/${sale.id}`).update({ entryDay: null, skipped: null })
 
   let setSkipped = (sale, skipped) =>
@@ -58,7 +57,7 @@ export const useSaleActions = () => {
   return useMemo(() => buildFirebaseActions(firebase, sheet), [firebase, sheet])
 }
 
-export const useSaleMethods = sale => {
+export const useSaleMethods = (sale) => {
   const sheet = useContext(SheetContext)
   const firebase = useFirebase()
   return useMemo(() => {
@@ -71,7 +70,7 @@ export const useSaleMethods = sale => {
   }, [firebase, sheet, sale])
 }
 
-export const useSaleList = sheet => {
+export const useSaleList = (sheet) => {
   useFirebaseConnect({
     path: sheet.firebasePath("sales"),
     queryParams: ["orderByChild=SaleOrderDate"],
@@ -84,11 +83,11 @@ export const useSaleList = sheet => {
   const sales = useSelector(({ firebase }) => {
     const sheets = firebase.ordered.sheets
     const data = sheets && sheets[sheet.spreadsheetId]
-    return (data ? data.sales : []).map(({ value }) => new Dear.Sale(value))
+    return (data?.sales ?? []).map(({ value }) => new Dear.Sale(value))
   })
 
   useEffect(() => {
-    loadUnfulfilledSaleIDs().then(ids => {
+    loadUnfulfilledSaleIDs().then((ids) => {
       console.info(`Loaded ${ids.length} unfulfilled IDs`)
       setIds(ids)
     })

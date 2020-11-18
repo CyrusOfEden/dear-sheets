@@ -1,9 +1,9 @@
-import * as Dear from "../dear/entities"
-import * as actions from "./actions"
+import axios from "axios"
+import _ from "lodash"
 
 import { UserProfile } from "../Auth"
-import _ from "lodash"
-import axios from "axios"
+import * as Dear from "../dear/entities"
+import * as actions from "./actions"
 
 export class Sheet {
   accessToken: string
@@ -62,7 +62,7 @@ export class Sheet {
     return this.config
   }
 
-  addOrder = (sale: Dear.Sale, weekDay: string) => {
+  addOrder = async (sale: Dear.Sale, weekDay: string) => {
     const params = { sale, weekDay, sheet: this }
     return Promise.all([
       actions.addToEntrySheet(params),
@@ -70,7 +70,7 @@ export class Sheet {
     ])
   }
 
-  removeOrder = (sale: Dear.Sale, weekDay: string) => {
+  removeOrder = async (sale: Dear.Sale, weekDay: string) => {
     const params = { sale, weekDay, sheet: this }
     return Promise.all([
       actions.removeFromEntrySheet(params),
@@ -80,7 +80,7 @@ export class Sheet {
 }
 
 export type RowConfig = [number, number]
-export type ProductType = "bulk" | "retail" | "sample"
+export type ProductType = "bulk" | "oneKilo" | "retail" | "sample"
 export type EntryConfig = {
   rows: RowConfig
   columns: Map<string, string>
@@ -88,25 +88,44 @@ export type EntryConfig = {
 
 export class Config {
   bulk: EntryConfig
+  entry: EntryConfig
+  oneKilo: EntryConfig
   retail: EntryConfig
   sample: EntryConfig
-  entry: EntryConfig
 
   hasProduct = (sku: string) =>
-    this.bulk.columns.has(sku) ||
-    this.retail.columns.has(sku) ||
-    this.sample.columns.has(sku)
+    this.bulk?.columns.has(sku) ||
+    this.oneKilo?.columns.has(sku) ||
+    this.retail?.columns.has(sku) ||
+    this.sample?.columns.has(sku)
 }
 
 const parseConfig = (values: string[][]): Config => {
   const config = new Config()
 
   const [bulkHeader, , ...bulkSkus] = values[0]
-  const [retailHeader, , ...retailSkus] = values[1]
-  const [sampleHeader, , ...sampleSkus] = values[2]
-  const [, , ...coffeeColumns] = values[3]
+  const [oneKiloHeader, , ...oneKiloSkus] = values[1]
+
+  const sheetHasKiloSKUs = oneKiloHeader.includes("One Kilo")
+
+  // Hacky shit, watch this out
+  const offset = sheetHasKiloSKUs ? 0 : -1
+  const [retailHeader, , ...retailSkus] = values[2 + offset]
+  const [sampleHeader, , ...sampleSkus] = values[3 + offset]
+
+  const [, , ...coffeeColumns] = values[4 + offset]
 
   config.bulk = parseProductTypeConfig(bulkHeader, bulkSkus, coffeeColumns)
+
+  // More hacky shit
+  if (sheetHasKiloSKUs) {
+    config.oneKilo = parseProductTypeConfig(
+      oneKiloHeader,
+      oneKiloSkus,
+      coffeeColumns,
+    )
+  }
+
   config.retail = parseProductTypeConfig(
     retailHeader,
     retailSkus,
@@ -118,8 +137,9 @@ const parseConfig = (values: string[][]): Config => {
     coffeeColumns,
   )
 
-  const [entryHeader, , ...sheets] = values[9]
-  const [, , ...sheetColumns] = values[10]
+  // More hacky shit with offset
+  const [entryHeader, , ...sheets] = values[10 + offset]
+  const [, , ...sheetColumns] = values[11 + offset]
 
   config.entry = parseProductTypeConfig(entryHeader, sheets, sheetColumns)
 

@@ -1,9 +1,9 @@
 import { Heading, IconButton, Link, Stack, Text } from "@chakra-ui/core"
 import React, { useCallback } from "react"
 
+import { useSaleMethods } from "../services/dear/hooks"
 import { Card } from "./Card"
 import LoadingSpinner from "./LoadingSpinner"
-import { useSaleMethods } from "../services/dear/hooks"
 
 const AuthorizeCard = ({ sale, sheet, ...props }) => {
   const { markUnentered } = useSaleMethods(sale)
@@ -11,7 +11,7 @@ const AuthorizeCard = ({ sale, sheet, ...props }) => {
     Promise.all([
       markUnentered(),
       sheet.removeOrder(sale, sale.entryDay),
-    ]).catch(reason => {
+    ]).catch((reason) => {
       console.error("Unable to remove sale due to", reason)
     })
   }, [markUnentered, sale, sheet])
@@ -43,7 +43,7 @@ const AuthorizeCard = ({ sale, sheet, ...props }) => {
                 {sale.customer.name}
               </Link>
               <Stack direction="row">
-                <Text>{sale.orderDate.toLocaleDateString()}</Text>
+                <Text>{sale.orderDate}</Text>
                 <Link
                   ml="auto"
                   href={sale.url}
@@ -57,7 +57,7 @@ const AuthorizeCard = ({ sale, sheet, ...props }) => {
             <Stack direction="row" ml="auto">
               <IconButton
                 icon="close"
-                onClick={event => {
+                onClick={(event) => {
                   event.stopPropagation()
                   removeOrder()
                 }}
@@ -76,7 +76,7 @@ const AuthorizeCard = ({ sale, sheet, ...props }) => {
           </Stack>
           {sale.enteredItems.length !== 0 && (
             <Stack direction="column" px={4} py={2} borderRadius={8}>
-              {sale.enteredItems.map(product => (
+              {sale.enteredItems.map((product) => (
                 <Stack direction="row" key={product.id}>
                   <Text fontWeight="bold" mr={2}>
                     {product.quantity}
@@ -88,7 +88,7 @@ const AuthorizeCard = ({ sale, sheet, ...props }) => {
           )}
           {sale.unenteredItems.length !== 0 && (
             <Stack direction="column" px={4} py={2} borderRadius={8}>
-              {sale.unenteredItems.map(product => (
+              {sale.unenteredItems.map((product) => (
                 <Stack
                   direction="row"
                   key={product.id}

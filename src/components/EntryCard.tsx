@@ -1,11 +1,11 @@
 import { Box, IconButton, Link, Stack, Text } from "@chakra-ui/core"
-import { Product, Sale } from "../services/dear/entities"
 import React, { useCallback, useMemo, useState } from "react"
 
+import { Product, Sale } from "../services/dear/entities"
+import { useSaleMethods } from "../services/dear/hooks"
+import { Sheet } from "../services/sheets/api"
 import { FocusCard } from "./Card"
 import LoadingSpinner from "./LoadingSpinner"
-import { Sheet } from "../services/sheets/api"
-import { useSaleMethods } from "../services/dear/hooks"
 
 interface SaleCardProps {
   sale: Sale
@@ -21,7 +21,9 @@ export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
   )
 
   const [day, _setDay] = useState(null)
-  const setDay = useMemo(() => event => _setDay(event.target.value), [_setDay])
+  const setDay = useMemo(() => (event) => _setDay(event.target.value), [
+    _setDay,
+  ])
 
   const enterOrder = useCallback(() => {
     if (sheet == null) {
@@ -38,7 +40,7 @@ export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
       sheet.addOrder(sale, day),
     ]
 
-    Promise.all(operations).catch(async reason => {
+    Promise.all(operations).catch(async (reason) => {
       console.error(`Unentering sale due to`, reason)
       return Promise.all([
         actions.markUnentered(),
@@ -75,7 +77,7 @@ export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
                   {sale.customer.name}
                 </Link>
                 <Stack direction="row">
-                  <Text>{sale.orderDate.toLocaleDateString()}</Text>
+                  <Text>{sale.orderDate}</Text>
                   <Link
                     ml="auto"
                     href={sale.url}
@@ -88,14 +90,16 @@ export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
               </Stack>
               <Box
                 as="select"
-                height={10}
-                color={isFocused ? "white" : "yellow.400"}
                 bg={isFocused ? "purple.300" : "yellow.50"}
-                onChange={setDay}
+                borderRadius={4}
+                color={isFocused ? "white" : "yellow.400"}
+                height={10}
                 ml="auto"
+                onChange={setDay}
+                transition="background 200ms ease-out, color 200ms ease-out"
               >
                 <option>Select</option>
-                {sheets.map(day => (
+                {sheets.map((day) => (
                   <option value={day} key={day}>
                     {day}
                   </option>
@@ -108,7 +112,7 @@ export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
                 color={isFocused ? "white" : "yellow.400"}
                 bg={isFocused ? "purple.400" : "yellow.50"}
                 aria-label={`Mark order by ${sale.customer.name} as entered`}
-                onClick={event => {
+                onClick={(event) => {
                   event.preventDefault()
                   enterOrder()
                 }}
@@ -116,7 +120,7 @@ export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
               />
             </Stack>
             <Stack direction="column" px={4} py={2} borderRadius={8}>
-              {sale.items.map(product => (
+              {sale.items.map((product) => (
                 <Stack direction="row" key={product.id}>
                   <Text fontWeight="bold" mr={2}>
                     {product.quantity}

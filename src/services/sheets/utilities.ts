@@ -23,7 +23,12 @@ export const columnToIndex = (columnRef: string) => {
 }
 
 export const saleItemsByProductType = ({ sale, sheet }: ActionContext) => {
-  const items = { bulk: emptyRow(), retail: emptyRow(), sample: emptyRow() }
+  const items = {
+    bulk: emptyRow(),
+    oneKilo: emptyRow(),
+    retail: emptyRow(),
+    sample: emptyRow(),
+  }
 
   for (const item of sale.items) {
     for (const [type, row] of Object.entries(items)) {
