@@ -1,7 +1,7 @@
+import { Stack } from "@chakra-ui/react"
 import React, { useState } from "react"
-import { Stack } from "@chakra-ui/core"
 
-export const Card = props => (
+export const Card = (props) => (
   <Stack
     direction="column"
     align=""

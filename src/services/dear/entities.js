@@ -110,7 +110,7 @@ export class Sale extends APIResponseWrapper {
     return !!this.authorizedAt
   }
 
-  get items() {
+  get items(): Product[] {
     return ((this.Order && this.Order.Lines) || []).map(
       (data) => new Product(data),
     )

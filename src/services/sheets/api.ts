@@ -4,6 +4,7 @@ import _ from "lodash"
 import { UserProfile } from "../Auth"
 import * as Dear from "../dear/entities"
 import * as actions from "./actions"
+import { columnToIndex } from "./utilities"
 
 export class Sheet {
   accessToken: string
@@ -80,18 +81,22 @@ export class Sheet {
 }
 
 export type RowConfig = [number, number]
+
 export type ProductType = "bulk" | "oneKilo" | "retail" | "sample"
+export const ProductTypes = ["bulk", "oneKilo", "retail", "sample"] as const
+
 export type EntryConfig = {
   rows: RowConfig
   columns: Map<string, string>
 }
 
 export class Config {
-  bulk: EntryConfig
-  entry: EntryConfig
-  oneKilo: EntryConfig
-  retail: EntryConfig
-  sample: EntryConfig
+  rowLength: number
+  bulk?: EntryConfig
+  entry?: EntryConfig
+  oneKilo?: EntryConfig
+  retail?: EntryConfig
+  sample?: EntryConfig
 
   hasProduct = (sku: string) =>
     this.bulk?.columns.has(sku) ||
@@ -103,22 +108,29 @@ export class Config {
 const parseConfig = (values: string[][]): Config => {
   const config = new Config()
 
-  const [bulkHeader, , ...bulkSkus] = values[0]
-  const [oneKiloHeader, , ...oneKiloSkus] = values[1]
+  // Is this one of the new sheets with 1-kilo bags?
+  const sheetOffset = values[1][0].includes("One Kilo") ? 1 : 0
 
-  const sheetHasKiloSKUs = oneKiloHeader.includes("One Kilo")
+  const [, , ...coffeeColumns] = values[3 + sheetOffset]
 
-  // Hacky shit, watch this out
-  const offset = sheetHasKiloSKUs ? 0 : -1
-  const [retailHeader, , ...retailSkus] = values[2 + offset]
-  const [sampleHeader, , ...sampleSkus] = values[3 + offset]
+  {
+    const columnIndices = coffeeColumns.map(columnToIndex).filter((n) => n > 0)
+    config.rowLength = Math.max(...columnIndices) - Math.min(...columnIndices)
+  }
 
-  const [, , ...coffeeColumns] = values[4 + offset]
+  {
+    const [entryHeader, , ...sheets] = values[9 + sheetOffset]
+    const [, , ...sheetColumns] = values[10 + sheetOffset]
+    config.entry = parseProductTypeConfig(entryHeader, sheets, sheetColumns)
+  }
 
-  config.bulk = parseProductTypeConfig(bulkHeader, bulkSkus, coffeeColumns)
+  {
+    const [bulkHeader, , ...bulkSkus] = values[0]
+    config.bulk = parseProductTypeConfig(bulkHeader, bulkSkus, coffeeColumns)
+  }
 
-  // More hacky shit
-  if (sheetHasKiloSKUs) {
+  if (sheetOffset === 1) {
+    const [oneKiloHeader, , ...oneKiloSkus] = values[1]
     config.oneKilo = parseProductTypeConfig(
       oneKiloHeader,
       oneKiloSkus,
@@ -126,22 +138,23 @@ const parseConfig = (values: string[][]): Config => {
     )
   }
 
-  config.retail = parseProductTypeConfig(
-    retailHeader,
-    retailSkus,
-    coffeeColumns,
-  )
-  config.sample = parseProductTypeConfig(
-    sampleHeader,
-    sampleSkus,
-    coffeeColumns,
-  )
+  {
+    const [retailHeader, , ...retailSkus] = values[1 + sheetOffset]
+    config.retail = parseProductTypeConfig(
+      retailHeader,
+      retailSkus,
+      coffeeColumns,
+    )
+  }
 
-  // More hacky shit with offset
-  const [entryHeader, , ...sheets] = values[10 + offset]
-  const [, , ...sheetColumns] = values[11 + offset]
-
-  config.entry = parseProductTypeConfig(entryHeader, sheets, sheetColumns)
+  {
+    const [sampleHeader, , ...sampleSkus] = values[2 + sheetOffset]
+    config.sample = parseProductTypeConfig(
+      sampleHeader,
+      sampleSkus,
+      coffeeColumns,
+    )
+  }
 
   return config
 }

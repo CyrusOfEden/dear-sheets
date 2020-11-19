@@ -1,3 +1,4 @@
+import { CheckIcon, RepeatClockIcon } from "@chakra-ui/icons"
 import {
   Box,
   Flex,
@@ -6,35 +7,21 @@ import {
   Progress,
   Stack,
   Text,
-} from "@chakra-ui/core"
-import React, { useContext, useMemo } from "react"
-import { SheetContext, useGoogleSheet } from "../services/sheets/hooks"
-import { useSaleActions, useSaleList } from "../services/dear/hooks"
+} from "@chakra-ui/react"
+import { RouteComponentProps } from "@reach/router"
+import React, { useCallback, useContext } from "react"
 
 import AuthorizeCard from "../components/AuthorizeCard"
 import EntryCard from "../components/EntryCard"
-import LoadingScreen from "./Loading"
-import { RouteComponentProps } from "@reach/router"
 import { withAuth } from "../services/Auth"
-
-const HeaderIconButton = ({ label, name, ...props }) => (
-  <IconButton aria-label={label} icon={name} {...props} />
-)
-HeaderIconButton.defaultProps = {
-  py: 1,
-  variant: "link",
-  variantColor: "yellow",
-  _hover: {
-    color: "yellow.600",
-  },
-  _active: {
-    color: "yellow.400",
-  },
-}
+import { useSaleActions, useSaleList } from "../services/dear/hooks"
+import { SheetContext, useGoogleSheet } from "../services/sheets/hooks"
+import LoadingScreen from "./LoadingScreen"
 
 const Header = ({ salesCount, reloadSales, location }) => {
   const progress = Math.ceil((salesCount.loaded / salesCount.total) * 100)
   const isLoading = salesCount.total > 0 && salesCount.loaded < salesCount.total
+
   return (
     <Flex
       as="header"
@@ -55,14 +42,19 @@ const Header = ({ salesCount, reloadSales, location }) => {
           </Text>
         </>
       ) : (
-        <HeaderIconButton
+        <IconButton
+          aria-label="Sync"
+          icon={<RepeatClockIcon />}
           onClick={() =>
             reloadSales()
               .then(() => (window.location.pathname = location.pathname))
               .catch(() => {})
           }
-          label="Sync"
-          name="repeat-clock"
+          py={1}
+          variant="link"
+          colorScheme="yellow"
+          _hover={{ color: "yellow.600" }}
+          _active={{ color: "yellow.400" }}
         />
       )}
     </Flex>
@@ -80,8 +72,8 @@ function EntryWorkflow({ location }: RouteComponentProps) {
   } = useSaleList(sheet)
 
   const { markAuthorized } = useSaleActions()
-  const clearAuthorized = useMemo(
-    () => (_: React.MouseEvent) => salesToAuthorize.forEach(markAuthorized),
+  const clearAuthorized = useCallback(
+    (_: React.MouseEvent) => salesToAuthorize.forEach(markAuthorized),
     [salesToAuthorize, markAuthorized],
   )
 
@@ -90,14 +82,13 @@ function EntryWorkflow({ location }: RouteComponentProps) {
   ) : salesCount.total === null ? (
     <LoadingScreen message="Loading orders..." />
   ) : (
-    <Stack flexDirection="column">
+    <Stack flexDirection="column" spacing={8}>
       <Header
         salesCount={salesCount}
         reloadSales={reloadSales}
         location={location}
       />
       <Flex
-        mt={4}
         flexDirection={["column", "column", "row"]}
         alignItems={["center", "center", "flex-start"]}
       >
@@ -105,12 +96,12 @@ function EntryWorkflow({ location }: RouteComponentProps) {
           width={["100%", 4 / 5, 1 / 2]}
           ml={["auto", "auto", 0]}
           mr={["auto", "auto", 4]}
-          mt={[8, 8, 0]}
+          mt={[16, 16, 0]}
         >
           <Heading color="yellow.800" mb={4}>
             To Enter
           </Heading>
-          {salesToEnter.map(sale => (
+          {salesToEnter.map((sale) => (
             <EntryCard key={sale.id} sheet={sheet} sale={sale} />
           ))}
         </Box>
@@ -126,15 +117,15 @@ function EntryWorkflow({ location }: RouteComponentProps) {
                 <Heading color="yellow.800">To Authorize</Heading>
                 <IconButton
                   aria-label="Mark all entered orders as authorized"
-                  icon="check"
+                  icon={<CheckIcon />}
                   onClick={clearAuthorized}
                   variant="outline"
-                  variantColor="purple"
+                  colorScheme="purple"
                   size="md"
                   ml="auto"
                 />
               </Flex>
-              {salesToAuthorize.map(sale => (
+              {salesToAuthorize.map((sale) => (
                 <AuthorizeCard key={sale.id} sheet={sheet} sale={sale} />
               ))}
             </>
@@ -145,11 +136,10 @@ function EntryWorkflow({ location }: RouteComponentProps) {
   )
 }
 
-interface WorkflowProps extends RouteComponentProps {
-  spreadsheet: string
-}
-
-function Workflow({ spreadsheet, ...props }: WorkflowProps) {
+export default withAuth(function Workflow({
+  spreadsheet,
+  ...props
+}: RouteComponentProps<{ spreadsheet: string }>) {
   const sheet = useGoogleSheet(spreadsheet)
   return (
     sheet && (
@@ -158,6 +148,4 @@ function Workflow({ spreadsheet, ...props }: WorkflowProps) {
       </SheetContext.Provider>
     )
   )
-}
-
-export default withAuth(Workflow)
+})

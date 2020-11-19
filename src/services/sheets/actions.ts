@@ -1,6 +1,5 @@
 import * as Dear from "../dear/entities"
-
-import { ProductType, Sheet } from "./api"
+import { ProductType, ProductTypes, Sheet } from "./api"
 import {
   addRowFinder,
   emptyRow,
@@ -79,7 +78,8 @@ export const addToDaySheet = async (context: ActionContext) => {
     }
     values[0] = invoiceCode
     values[1] = accountName
-    return sheet.updateRows(`${weekDay}!A${rowNumber}:AH${rowNumber}`, values)
+    await sheet.updateRows(`${weekDay}!A${rowNumber}:AH${rowNumber}`, values)
+    return true
   }
 
   const items = saleItemsByProductType(context)
@@ -87,16 +87,11 @@ export const addToDaySheet = async (context: ActionContext) => {
   const enterProductsWithType = (type: ProductType) =>
     setRow(findEntryRow(sheet.config[type]), items[type])
 
-  const operations = [
-    enterProductsWithType("bulk"),
-    enterProductsWithType("retail"),
-  ]
-
-  if (items.sample.hasEntries) {
-    operations.push(enterProductsWithType("sample"))
-  }
-
-  await Promise.all(operations)
+  await Promise.all(
+    ProductTypes.filter((type) => items[type].hasEntries).map(
+      enterProductsWithType,
+    ),
+  )
   return true
 }
 
@@ -108,16 +103,17 @@ export const removeFromDaySheet = async (context: ActionContext) => {
     if (rowNumber === -1) {
       return false
     }
-    return sheet.updateRows(
+    await sheet.updateRows(
       `${weekDay}!A${rowNumber}:AH${rowNumber}`,
-      emptyRow(),
+      emptyRow(sheet.config.rowLength),
     )
+    return true
   }
 
   await Promise.all(
-    "bulk retail sample"
-      .split(" ")
-      .map(type => clearRow(findEntryRow(sheet.config[type]))),
+    ProductTypes.filter((type) => sheet.config[type] != null).map((type) =>
+      clearRow(findEntryRow(sheet.config[type])),
+    ),
   )
 
   return true

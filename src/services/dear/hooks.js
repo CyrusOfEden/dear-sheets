@@ -62,11 +62,10 @@ export const useSaleMethods = (sale) => {
   const firebase = useFirebase()
   return useMemo(() => {
     const actions = buildFirebaseActions(firebase, sheet)
-    let events = {}
     for (const [name, fn] of Object.entries(actions)) {
-      events[name] = (...args) => fn(sale, ...args)
+      actions[name] = (...args) => fn(sale, ...args)
     }
-    return events
+    return actions
   }, [firebase, sheet, sale])
 }
 

@@ -1,14 +1,14 @@
 import { AuthCredential, UserCredential } from "@firebase/auth-types"
+import React, { useCallback, useEffect } from "react"
+import { useSelector } from "react-redux"
 import {
   Credentials,
   isEmpty,
   isLoaded,
   useFirebase,
 } from "react-redux-firebase"
-import React, { useEffect, useMemo } from "react"
 
-import LoadingScreen from "../screens/Loading"
-import { useSelector } from "react-redux"
+import LoadingScreen from "../screens/LoadingScreen"
 
 const config: Credentials = {
   provider: "google",
@@ -33,32 +33,27 @@ type LoginCredentials = UserCredential & {
   profile: UserProfile
 }
 
-const oneHour = 60 * 60 * 1000
-
 export const useGoogleLogin = () => {
   const firebase = useFirebase()
 
-  const login = useMemo(
-    () => () =>
-      firebase.login(config).then((auth: LoginCredentials) => {
-        const { accessToken } = auth.credential
-        const accessExpiry = Date.now() + oneHour
-        firebase.updateProfile({ accessToken, accessExpiry })
-        return auth
-      }),
-    [firebase],
-  )
+  const login = useCallback(async () => {
+    const auth = (await firebase.login(config)) as LoginCredentials
+    const { accessToken } = auth.credential
+    const accessExpiry = Date.now() + 60 * 59 * 1000
+    firebase.updateProfile({ accessToken, accessExpiry })
+    return auth
+  }, [firebase])
 
   return login
 }
 
 export const useAuth = () => {
-  const user = useSelector(({ firebase: { profile } }) => profile)
+  const user = useSelector(({ firebase: { profile } }: any) => profile)
   const isAuthorized = isLoaded(user) && !isEmpty(user) && !user.disabled
   return [user, isAuthorized] as [UserProfile, boolean]
 }
 
-export const withAuth = Component => props => {
+export const withAuth = (Component) => (props) => {
   const login = useGoogleLogin()
   const [user, isAuthorized] = useAuth()
 

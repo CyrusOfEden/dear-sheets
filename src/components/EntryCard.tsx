@@ -1,7 +1,9 @@
-import { Box, IconButton, Link, Stack, Text } from "@chakra-ui/core"
+import { ArrowRightIcon } from "@chakra-ui/icons"
+import { IconButton, Link, Select, Stack, Text } from "@chakra-ui/react"
+import { useRequest } from "ahooks"
 import React, { useCallback, useMemo, useState } from "react"
 
-import { Product, Sale } from "../services/dear/entities"
+import { Sale } from "../services/dear/entities"
 import { useSaleMethods } from "../services/dear/hooks"
 import { Sheet } from "../services/sheets/api"
 import { FocusCard } from "./Card"
@@ -15,39 +17,36 @@ interface SaleCardProps {
 export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
   const actions = useSaleMethods(sale)
 
-  const sheets = useMemo(
-    () => sheet.isLoaded && Array.from(sheet.config.entry.columns.keys()),
+  const entryDays = useMemo(
+    () => (sheet.isLoaded ? Array.from(sheet.config.entry.columns.keys()) : []),
     [sheet],
   )
 
   const [day, _setDay] = useState(null)
-  const setDay = useMemo(() => (event) => _setDay(event.target.value), [
-    _setDay,
-  ])
+  const setDay = useCallback((event) => _setDay(event.target.value), [_setDay])
 
-  const enterOrder = useCallback(() => {
-    if (sheet == null) {
-      return
-    }
+  const { run: enterOrder, loading: isEntering } = useRequest(
+    async () => {
+      const skipped = sale.items.filter(
+        (product) => !sheet.config.hasProduct(product.sku),
+      )
 
-    const skipped = sale.items.filter(
-      (product: Product) => !sheet.config.hasProduct(product.sku),
-    )
-
-    const operations = [
-      actions.markEntered(day),
-      actions.setSkipped(skipped),
-      sheet.addOrder(sale, day),
-    ]
-
-    Promise.all(operations).catch(async (reason) => {
-      console.error(`Unentering sale due to`, reason)
-      return Promise.all([
-        actions.markUnentered(),
-        sheet.removeOrder(sale, day),
-      ])
-    })
-  }, [day, actions, sale, sheet])
+      try {
+        await Promise.all([
+          actions.markEntered(day),
+          actions.setSkipped(skipped),
+          sheet.addOrder(sale, day),
+        ])
+      } catch (error) {
+        window.alert(`Unable to enter order due to ${error}`)
+        await Promise.all([
+          actions.markUnentered(),
+          sheet.removeOrder(sale, day),
+        ])
+      }
+    },
+    { manual: true, ready: sheet != null, throwOnError: false },
+  )
 
   return (
     <FocusCard {...props}>
@@ -59,13 +58,14 @@ export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
             <Stack
               direction="row"
               align="center"
+              justify="space-between"
               bg="yellow.50"
               px={4}
               py={2}
               borderRadius={8}
               width="100%"
             >
-              <Stack direction="column" width="60%">
+              <Stack direction="column" width="60%" spacing={1}>
                 <Link
                   fontWeight="bold"
                   href={sale.url}
@@ -88,27 +88,27 @@ export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
                   </Link>
                 </Stack>
               </Stack>
-              <Box
-                as="select"
+              <Select
                 bg={isFocused ? "purple.300" : "yellow.50"}
                 borderRadius={4}
+                borderColor="transparent"
                 color={isFocused ? "white" : "yellow.400"}
+                w={48}
                 height={10}
-                ml="auto"
                 onChange={setDay}
                 transition="background 200ms ease-out, color 200ms ease-out"
               >
                 <option>Select</option>
-                {sheets.map((day) => (
-                  <option value={day} key={day}>
+                {entryDays.map((day) => (
+                  <option key={day} value={day}>
                     {day}
                   </option>
                 ))}
-              </Box>
+              </Select>
               <IconButton
-                icon="arrow-right"
+                icon={<ArrowRightIcon />}
                 height={10}
-                variantColor="purple"
+                colorScheme="purple"
                 color={isFocused ? "white" : "yellow.400"}
                 bg={isFocused ? "purple.400" : "yellow.50"}
                 aria-label={`Mark order by ${sale.customer.name} as entered`}
@@ -116,6 +116,7 @@ export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
                   event.preventDefault()
                   enterOrder()
                 }}
+                isLoading={isEntering}
                 isDisabled={day === null}
               />
             </Stack>

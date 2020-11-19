@@ -1,8 +1,9 @@
-import { Box, Button, Heading } from "@chakra-ui/core"
-import React, { useCallback, useEffect, useMemo, useState } from "react"
-import { useAuth, useGoogleLogin } from "../services/Auth"
-
+import { ArrowForwardIcon } from "@chakra-ui/icons"
+import { Box, Button, Heading } from "@chakra-ui/react"
 import { RouteComponentProps } from "@reach/router"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
+
+import { useAuth, useGoogleLogin } from "../services/Auth"
 
 const weeknames = "Sunday Monday Tuesday Wednesday Thursday Friday Saturday".split(
   " ",
@@ -55,8 +56,8 @@ const Login = ({ navigate }: RouteComponentProps) => {
         isLoading={isLoading}
         loadingText={loadingText}
         onClick={authenticate}
-        variantColor="yellow"
-        rightIcon="arrow-forward"
+        colorScheme="yellow"
+        rightIcon={<ArrowForwardIcon />}
       >
         Get Started
       </Button>

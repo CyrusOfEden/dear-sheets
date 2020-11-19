@@ -1,5 +1,6 @@
-import { Heading, IconButton, Link, Stack, Text } from "@chakra-ui/core"
-import React, { useCallback } from "react"
+import { Button, Link, Stack, Text } from "@chakra-ui/react"
+import { useRequest } from "ahooks"
+import React from "react"
 
 import { useSaleMethods } from "../services/dear/hooks"
 import { Card } from "./Card"
@@ -7,14 +8,20 @@ import LoadingSpinner from "./LoadingSpinner"
 
 const AuthorizeCard = ({ sale, sheet, ...props }) => {
   const { markUnentered } = useSaleMethods(sale)
-  const removeOrder = useCallback(() => {
-    Promise.all([
-      markUnentered(),
-      sheet.removeOrder(sale, sale.entryDay),
-    ]).catch((reason) => {
-      console.error("Unable to remove sale due to", reason)
-    })
-  }, [markUnentered, sale, sheet])
+
+  const { run: removeOrder, loading: isRemoving } = useRequest(
+    async () => {
+      try {
+        await Promise.all([
+          markUnentered(),
+          sheet.removeOrder(sale, sale.entryDay),
+        ])
+      } catch (error) {
+        window.alert(`Unable to remove order due to ${error}`)
+      }
+    },
+    { manual: true, throwOnError: false },
+  )
 
   return (
     <Card color="yellow.700" bg="yellow.50" borderColor="yellow.200" {...props}>
@@ -25,13 +32,15 @@ const AuthorizeCard = ({ sale, sheet, ...props }) => {
           <Stack
             direction="row"
             align="center"
+            justify="space-between"
             bg="white"
             px={4}
             py={2}
             borderRadius={8}
+            spacing={2}
             width="100%"
           >
-            <Stack direction="column" width="60%">
+            <Stack direction="column" width="60%" spacing={1}>
               <Link
                 fontWeight="bold"
                 href={sale.url}
@@ -54,25 +63,21 @@ const AuthorizeCard = ({ sale, sheet, ...props }) => {
                 </Link>
               </Stack>
             </Stack>
-            <Stack direction="row" ml="auto">
-              <IconButton
-                icon="close"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  removeOrder()
-                }}
-                size="xs"
-                mr={8}
-                variant="outline"
-                variantColor="purple"
-                // borderColor={isFocused ? "purple.400" : "yellow.50"}
-                // color={isFocused ? "purple.600" : "yellow.200"}
-                aria-label={`Mark order by ${sale.customer.name} as not entered`}
-              />
-              <Heading fontWeight="bold" fontSize="lg">
-                {sale.entryDay}
-              </Heading>
-            </Stack>
+            <Button
+              size="sm"
+              onClick={(event) => {
+                event.stopPropagation()
+                removeOrder()
+              }}
+              isLoading={isRemoving}
+              mr={0}
+              ml="auto"
+              variant="outline"
+              colorScheme="purple"
+              aria-label={`Mark order by ${sale.customer.name} as not entered`}
+            >
+              Remove from {sale.entryDay}
+            </Button>
           </Stack>
           {sale.enteredItems.length !== 0 && (
             <Stack direction="column" px={4} py={2} borderRadius={8}>

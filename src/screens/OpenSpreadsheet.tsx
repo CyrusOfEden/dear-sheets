@@ -1,44 +1,43 @@
-import { Box, Button, Heading, Icon, Input, Stack, Text } from "@chakra-ui/core"
+import { EditIcon } from "@chakra-ui/icons"
+import { Box, Button, Heading, Input, Stack, Text } from "@chakra-ui/react"
+import { RouteComponentProps } from "@reach/router"
 import React, { useCallback, useRef, useState } from "react"
 
-import { RouteComponentProps } from "@reach/router"
 import { withAuth } from "../services/Auth"
 
-const parseID = new RegExp("/spreadsheets/d/([a-zA-Z0-9-_]+)/")
-
-const inputStyles = {
-  color: "yellow.800",
-  borderColor: "yellow.500",
-  _hover: { borderColor: "yellow.300" },
-  _focus: { borderColor: "yellow.600" },
-}
-
 const OpenSpreadsheet = ({ navigate }: RouteComponentProps) => {
-  const url = useRef(null)
+  const url = useRef<HTMLInputElement>(null)
+
   const [error, setError] = useState(false)
-  const [isLoading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const openSpreadsheet = useCallback(
-    event => {
-      event.preventDefault()
-      setLoading(true)
-      const match = (url.current.value as string).match(parseID)
-      if (match) {
+    (event) => {
+      try {
+        setLoading(true)
+        event.preventDefault()
+        const match = url.current.value.match(
+          new RegExp("/spreadsheets/d/([a-zA-Z0-9-_]+)/"),
+        )
+        if (!match) {
+          throw new Error("Expected a spreadsheet URL")
+        }
         setError(false)
         navigate(`/2/entry_workflow/${match[1]}`)
-      } else {
-        setLoading(false)
+      } catch {
         setError(true)
+      } finally {
+        setLoading(false)
       }
     },
-    [navigate, url, setLoading],
+    [navigate],
   )
 
   return (
-    <Stack direction="column" mt="16vh" align="center">
+    <Stack direction="column" mt="16vh" align="center" spacing={8}>
       <Box textAlign="center">
         <Heading color="yellow.700" size="xl">
-          <Icon name="edit" color="yellow.500" mr={4} />
+          <EditIcon color="yellow.500" mr={4} />
           Open a Spreadsheet
         </Heading>
       </Box>
@@ -51,10 +50,17 @@ const OpenSpreadsheet = ({ navigate }: RouteComponentProps) => {
         as="form"
         onSubmit={openSpreadsheet}
       >
-        <Input ref={url} placeholder="Spreadsheet URL" {...inputStyles} />
+        <Input
+          ref={url}
+          placeholder="Spreadsheet URL"
+          color="yellow.800"
+          borderColor="yellow.500"
+          _hover={{ borderColor: "yellow.300" }}
+          _focus={{ borderColor: "yellow.600" }}
+        />
         <Button
-          variantColor="yellow"
-          isLoading={isLoading}
+          colorScheme="yellow"
+          isLoading={loading}
           loadingText="Opening..."
           onClick={openSpreadsheet}
         >

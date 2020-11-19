@@ -1,5 +1,5 @@
 import { ActionContext } from "./actions"
-import { EntryConfig } from "./api"
+import { EntryConfig, ProductType } from "./api"
 
 interface EntryId {
   invoiceCode: string
@@ -9,8 +9,8 @@ interface EntryId {
 type RowFinderPredicate = (context: ActionContext, entry: EntryId) => boolean
 type RowValues = string[] & { hasEntries: boolean }
 
-export const emptyRow = (): RowValues =>
-  Object.assign(new Array(28).fill(""), { hasEntries: false })
+export const emptyRow = (size: number): RowValues =>
+  Object.assign(new Array(size).fill(""), { hasEntries: false })
 
 // Spreadsheet-style column refs like "A", "M", "AB" to 0-based integer indexes
 const indexOfA = "A".charCodeAt(0)
@@ -23,17 +23,16 @@ export const columnToIndex = (columnRef: string) => {
 }
 
 export const saleItemsByProductType = ({ sale, sheet }: ActionContext) => {
-  const items = {
-    bulk: emptyRow(),
-    oneKilo: emptyRow(),
-    retail: emptyRow(),
-    sample: emptyRow(),
+  const items: Record<ProductType, RowValues> = {
+    bulk: emptyRow(sheet.config.rowLength),
+    oneKilo: emptyRow(sheet.config.rowLength),
+    retail: emptyRow(sheet.config.rowLength),
+    sample: emptyRow(sheet.config.rowLength),
   }
 
   for (const item of sale.items) {
     for (const [type, row] of Object.entries(items)) {
-      const config: EntryConfig = sheet.config[type]
-      const column = config.columns.get(item.sku)
+      const column = sheet.config[type]?.columns?.get(item.sku)
       if (column != null) {
         row[columnToIndex(column)] = item.quantity
         row.hasEntries = true

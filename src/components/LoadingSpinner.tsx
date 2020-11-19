@@ -1,4 +1,8 @@
+import { Spinner, SpinnerProps } from "@chakra-ui/react"
 import React from "react"
-import { Spinner } from "@chakra-ui/core"
 
-export default props => <Spinner color="yellow.500" size="lg" {...props} />
+const LoadingSpinner: React.FC<SpinnerProps> = (props) => (
+  <Spinner color="yellow.500" size="lg" {...props} />
+)
+
+export default LoadingSpinner
