@@ -136,7 +136,7 @@ export const useSaleList = (sheet) => {
     salesToEnter,
     salesCount: {
       loaded: sales.length,
-      total: ids ? ids.length : null,
+      total: ids?.length,
     },
   }
 }

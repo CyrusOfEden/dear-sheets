@@ -4,7 +4,7 @@ import {
   addRowFinder,
   emptyRow,
   removeRowFinder,
-  saleItemsByProductType,
+  saleItemsAsRowsGroupedByProductType,
 } from "./utilities"
 
 export interface ActionContext {
@@ -65,6 +65,9 @@ export const removeFromEntrySheet = async (context: ActionContext) => {
   return false
 }
 
+const sheetProductTypes = (sheet: ActionContext["sheet"]) =>
+  ProductTypes.filter((type) => sheet.config[type] != null)
+
 export const addToDaySheet = async (context: ActionContext) => {
   const findEntryRow = await addRowFinder(context)
   const { sale, weekDay, sheet } = context
@@ -82,16 +85,12 @@ export const addToDaySheet = async (context: ActionContext) => {
     return true
   }
 
-  const items = saleItemsByProductType(context)
+  const rowValues = saleItemsAsRowsGroupedByProductType(context)
 
-  const enterProductsWithType = (type: ProductType) =>
-    setRow(findEntryRow(sheet.config[type]), items[type])
+  const enterRowOfProductsOfType = (type: ProductType) =>
+    setRow(findEntryRow(sheet.config[type]), rowValues[type])
 
-  await Promise.all(
-    ProductTypes.filter((type) => items[type].hasEntries).map(
-      enterProductsWithType,
-    ),
-  )
+  await Promise.all(sheetProductTypes(sheet).map(enterRowOfProductsOfType))
   return true
 }
 
@@ -110,11 +109,10 @@ export const removeFromDaySheet = async (context: ActionContext) => {
     return true
   }
 
-  await Promise.all(
-    ProductTypes.filter((type) => sheet.config[type] != null).map((type) =>
-      clearRow(findEntryRow(sheet.config[type])),
-    ),
-  )
+  const clearRowOfProductsOfType = (type: ProductType) =>
+    clearRow(findEntryRow(sheet.config[type]))
+
+  await Promise.all(sheetProductTypes(sheet).map(clearRowOfProductsOfType))
 
   return true
 }

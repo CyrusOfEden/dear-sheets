@@ -22,7 +22,10 @@ export const columnToIndex = (columnRef: string) => {
   return index
 }
 
-export const saleItemsByProductType = ({ sale, sheet }: ActionContext) => {
+export const saleItemsAsRowsGroupedByProductType = ({
+  sale,
+  sheet,
+}: ActionContext) => {
   const items: Record<ProductType, RowValues> = {
     bulk: emptyRow(sheet.config.rowLength),
     oneKilo: emptyRow(sheet.config.rowLength),
@@ -44,7 +47,7 @@ export const saleItemsByProductType = ({ sale, sheet }: ActionContext) => {
   return items
 }
 
-const findRow = (predicate: RowFinderPredicate) => async (
+const rowFinderWhere = (predicate: RowFinderPredicate) => async (
   context: ActionContext,
 ) => {
   const {
@@ -73,7 +76,7 @@ const findRow = (predicate: RowFinderPredicate) => async (
   return findRowForProductType
 }
 
-export const addRowFinder = findRow(
+export const addRowFinder = rowFinderWhere(
   ({ sale }, { invoiceCode, accountName }) =>
     !accountName ||
     !invoiceCode ||
@@ -81,7 +84,7 @@ export const addRowFinder = findRow(
       (!invoiceCode || invoiceCode === sale.invoice.number)),
 )
 
-export const removeRowFinder = findRow(
+export const removeRowFinder = rowFinderWhere(
   ({ sale }, { invoiceCode, accountName }) =>
     invoiceCode === sale.invoice.number && accountName === sale.customer.name,
 )

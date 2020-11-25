@@ -1,8 +1,8 @@
-import { ExtendedFirebaseInstance, useFirebase } from "react-redux-firebase"
 import { createContext, useEffect, useState } from "react"
+import { ExtendedFirebaseInstance, useFirebase } from "react-redux-firebase"
 
-import { Sheet } from "./api"
 import { useAuth } from "../Auth"
+import { Sheet } from "./api"
 
 export const SheetContext = createContext(null)
 
@@ -30,20 +30,22 @@ export const useGoogleSheet = (spreadsheetId: string) => {
 
   useEffect(() => {
     const sheet = new Sheet({ user, spreadsheetId })
-    const onSuccess = () => setSheet(sheet)
-    const onError = () => {
-      window.alert("No automation config found, please press the back button")
-    }
 
     const touchUpdatedAt = () =>
       firebase.ref(sheet.firebasePath()).update({ lastUpdatedAt: Date.now() })
 
     touchUpdatedAt().then(() => trimSheetCache(firebase))
 
-    sheet
-      .loadConfig()
-      .catch(onError)
-      .then(onSuccess)
+    sheet.loadConfig().then(
+      () => {
+        setSheet(sheet)
+      },
+      () => {
+        window.alert(
+          "No automation config found, please go back and try again.",
+        )
+      },
+    )
 
     return touchUpdatedAt
   }, [user, spreadsheetId, firebase])

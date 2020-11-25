@@ -63,7 +63,10 @@ export const withAuth = (Component) => (props) => {
       const expiryBuffer = 5 * 60 * 1000 // 5 minutes
       const expiresIn = user.accessExpiry - Date.now() - expiryBuffer
       const timer = setTimeout(login, expiresIn)
-      return () => clearTimeout(timer)
+      return () => {
+        console.log(`Clearing login for ${new Date(user.accessExpiry)}`)
+        clearTimeout(timer)
+      }
     } else if (isLoaded(user) && isEmpty(user)) {
       login()
     }
