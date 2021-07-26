@@ -22,6 +22,15 @@ export const columnToIndex = (columnRef: string) => {
   return index
 }
 
+// From https://cwestblog.com/2013/09/05/javascript-snippet-convert-number-to-column-name/
+export const indexToColumn = (index: number) => {
+  let column = ""
+  for (let a = 1, b = 26; (index -= a) >= 0; a = b, b *= 26) {
+    column = String.fromCharCode((index % b) / a + 65) + column
+  }
+  return column
+}
+
 export const saleItemsAsRowsGroupedByProductType = ({
   sale,
   sheet,
@@ -47,34 +56,33 @@ export const saleItemsAsRowsGroupedByProductType = ({
   return items
 }
 
-const rowFinderWhere = (predicate: RowFinderPredicate) => async (
-  context: ActionContext,
-) => {
-  const {
-    data: {
-      values: [invoices, accounts],
-    },
-  } = await context.sheet.request(`${context.weekDay}!A:B`, {
-    params: {
-      majorDimension: "COLUMNS",
-    },
-  })
+const rowFinderWhere =
+  (predicate: RowFinderPredicate) => async (context: ActionContext) => {
+    const {
+      data: {
+        values: [invoices, accounts],
+      },
+    } = await context.sheet.request(`${context.weekDay}!A:B`, {
+      params: {
+        majorDimension: "COLUMNS",
+      },
+    })
 
-  const findRowForProductType = ({
-    rows: [start, end],
-  }: EntryConfig): number => {
-    for (let row = start; row < end; row += 1) {
-      const invoiceCode = invoices[row - 1]
-      const accountName = accounts[row - 1]
-      if (predicate(context, { invoiceCode, accountName })) {
-        return row
+    const findRowForProductType = ({
+      rows: [start, end],
+    }: EntryConfig): number => {
+      for (let row = start; row < end; row += 1) {
+        const invoiceCode = invoices[row - 1]
+        const accountName = accounts[row - 1]
+        if (predicate(context, { invoiceCode, accountName })) {
+          return row
+        }
       }
+      return -1
     }
-    return -1
-  }
 
-  return findRowForProductType
-}
+    return findRowForProductType
+  }
 
 export const addRowFinder = rowFinderWhere(
   ({ sale }, { invoiceCode, accountName }) =>

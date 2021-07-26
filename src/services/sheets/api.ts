@@ -4,7 +4,7 @@ import _ from "lodash"
 import { UserProfile } from "../Auth"
 import * as Dear from "../dear/entities"
 import * as actions from "./actions"
-import { columnToIndex } from "./utilities"
+import { columnToIndex, indexToColumn } from "./utilities"
 
 export class Sheet {
   accessToken: string
@@ -92,6 +92,7 @@ export type EntryConfig = {
 
 export class Config {
   rowLength: number
+  maxColumn: string
   bulk?: EntryConfig
   entry?: EntryConfig
   oneKilo?: EntryConfig
@@ -115,7 +116,10 @@ const parseConfig = (values: string[][]): Config => {
 
   {
     const columnIndices = coffeeColumns.map(columnToIndex).filter((n) => n > 0)
-    config.rowLength = Math.max(...columnIndices) - Math.min(...columnIndices)
+    const maxIndex = Math.max(...columnIndices)
+    const minIndex = Math.min(...columnIndices)
+    config.rowLength = maxIndex - minIndex
+    config.maxColumn = indexToColumn(maxIndex + 1)
   }
 
   {
