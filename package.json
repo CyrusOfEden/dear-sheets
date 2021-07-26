@@ -10,7 +10,7 @@
     "@emotion/react": "^11.1.1",
     "@emotion/styled": "^11.0.0",
     "@reach/router": "^1.2.1",
-    "ahooks": "^2.9.1",
+    "ahooks": "^2.10.9",
     "axios": "^0.19.0",
     "firebase": "^7.5.0",
     "framer-motion": "^2.9.4",

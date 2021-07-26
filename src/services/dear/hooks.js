@@ -1,5 +1,6 @@
+import { useMount } from "ahooks"
 import axios from "axios"
-import { useContext, useEffect, useMemo, useState } from "react"
+import { useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { useSelector } from "react-redux"
 import { useFirebase, useFirebaseConnect } from "react-redux-firebase"
 
@@ -24,11 +25,12 @@ const cacheSales = async ({ ids, sheet, firebase }) => {
   console.info(`Removing ${idsToRemove.length} sales`)
   await Promise.all(idsToRemove.map((id) => firebase.remove(`${root}/${id}`)))
 
-  const cacheSale = (id) =>
-    Dear.Sale.find(id).then((data) => {
-      console.info(`Loaded ${id}`)
-      return firebase.set(`${root}/${id}`, data)
-    })
+  const cacheSale = async (id) => {
+    const data = await Dear.Sale.find(id)
+    console.info(`Loaded ${id}`)
+    return firebase.set(`${root}/${id}`, data)
+  }
+
   console.info(`Loading ${idsToLoad.length} sales`)
   await Promise.all(idsToLoad.map(cacheSale))
 }
@@ -36,16 +38,16 @@ const cacheSales = async ({ ids, sheet, firebase }) => {
 const buildFirebaseActions = (firebase, sheet) => {
   const root = sheet.firebasePath("sales")
 
-  let markAuthorized = (sale) =>
+  const markAuthorized = (sale) =>
     firebase.set(`${root}/${sale.id}/authorizedAt`, Date.now())
 
-  let markEntered = (sale, sheet) =>
+  const markEntered = (sale, sheet) =>
     firebase.set(`${root}/${sale.id}/entryDay`, sheet)
 
-  let markUnentered = (sale) =>
+  const markUnentered = (sale) =>
     firebase.ref(`${root}/${sale.id}`).update({ entryDay: null, skipped: null })
 
-  let setSkipped = (sale, skipped) =>
+  const setSkipped = (sale, skipped) =>
     firebase.set(`${root}/${sale.id}/skipped`, skipped)
 
   return { markAuthorized, markEntered, markUnentered, setSkipped }
@@ -85,12 +87,11 @@ export const useSaleList = (sheet) => {
     return (data?.sales ?? []).map(({ value }) => new Dear.Sale(value))
   })
 
-  useEffect(() => {
-    loadUnfulfilledSaleIDs().then((ids) => {
-      console.info(`Loaded ${ids.length} unfulfilled IDs`)
-      setIds(ids)
-    })
-  }, [])
+  useMount(async () => {
+    const ids = await loadUnfulfilledSaleIDs()
+    console.info(`Loaded ${ids.length} unfulfilled IDs`)
+    setIds(ids)
+  })
 
   useEffect(() => {
     if (ids && isComplete === null) {
@@ -99,20 +100,17 @@ export const useSaleList = (sheet) => {
     }
   }, [firebase, ids, isComplete, setComplete, sheet])
 
-  const reloadSales = useMemo(
-    () => async () => {
-      const warning = "This will reset all progress you've made. Are you sure?"
-      if (window.confirm(warning)) {
-        await firebase.remove(sheet.firebasePath("sales/"))
-        setIds([])
-        setComplete(null)
-        await loadUnfulfilledSaleIDs().then(setIds)
-      } else {
-        return Promise.reject()
-      }
-    },
-    [firebase, sheet],
-  )
+  const reloadSales = useCallback(async () => {
+    const warning = "This will reset all progress you've made. Are you sure?"
+    if (window.confirm(warning)) {
+      await firebase.remove(sheet.firebasePath("sales/"))
+      setIds([])
+      setComplete(null)
+      await loadUnfulfilledSaleIDs().then(setIds)
+    } else {
+      return Promise.reject()
+    }
+  }, [firebase, sheet])
 
   const [salesToAuthorize, salesToEnter] = useMemo(() => {
     let toAuthorize = []

@@ -129,7 +129,7 @@ export class Sale extends APIResponseWrapper {
   }
 
   get notes() {
-    const text = this.Note
+    const text = this.Note || ""
     const metaIndex = text.indexOf("shopifyCartToken")
     if (metaIndex !== -1) {
       return text.slice(0, metaIndex)

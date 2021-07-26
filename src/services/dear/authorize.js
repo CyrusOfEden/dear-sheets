@@ -22,7 +22,7 @@ async function pick(sale) {
   const url =
     "https://inventory.dearsystems.com/ExternalApi/v2/sale/fulfilment/pick"
   const response = await axios.post(url, data)
-  const { TaskID: _, ...picking } = response.data
+  const { TaskID: _taskId, ...picking } = response.data
   return _.set(sale, "Fulfilments.0.Pick", picking)
 }
 
@@ -58,6 +58,6 @@ async function ship(sale) {
   const url =
     "https://inventory.dearsystems.com/ExternalApi/v2/sale/fulfilment/ship"
   const response = await axios.put(url, data)
-  const { TaskID: _, ...shipping } = response.data
+  const { TaskID: _taskId, ...shipping } = response.data
   return _.set(sale, "Fulfilments.0.Ship", shipping)
 }

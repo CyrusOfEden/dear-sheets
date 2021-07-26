@@ -81,7 +81,7 @@ export const addToDaySheet = async (context: ActionContext) => {
     }
     values[0] = invoiceCode
     values[1] = accountName
-    await sheet.updateRows(`${weekDay}!A${rowNumber}:AH${rowNumber}`, values)
+    await sheet.updateRows(`${weekDay}!A${rowNumber}:AJ${rowNumber}`, values)
     return true
   }
 
@@ -103,7 +103,7 @@ export const removeFromDaySheet = async (context: ActionContext) => {
       return false
     }
     await sheet.updateRows(
-      `${weekDay}!A${rowNumber}:AH${rowNumber}`,
+      `${weekDay}!A${rowNumber}:AJ${rowNumber}`,
       emptyRow(sheet.config.rowLength),
     )
     return true
