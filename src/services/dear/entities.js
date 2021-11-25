@@ -3,7 +3,7 @@ import memoize from "lodash/memoize"
 import PromiseThrottler from "promise-throttle"
 
 const rateLimiter = new PromiseThrottler({
-  requestsPerSecond: 1,
+  requestsPerSecond: 2,
   promiseImplementation: Promise,
 })
 
@@ -111,9 +111,11 @@ export class Sale extends APIResponseWrapper {
   }
 
   get items(): Product[] {
-    return ((this.Order && this.Order.Lines) || []).map(
-      (data) => new Product(data),
-    )
+    return (this.Order?.Lines ?? []).map((data) => new Product(data))
+  }
+
+  get itemCount(): number {
+    return this.Order?.Lines?.length ?? 0
   }
 
   get unenteredItems() {

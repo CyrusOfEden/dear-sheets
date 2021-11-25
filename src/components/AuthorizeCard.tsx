@@ -6,7 +6,7 @@ import { useSaleMethods } from "../services/dear/hooks"
 import { Card } from "./Card"
 import LoadingSpinner from "./LoadingSpinner"
 
-const AuthorizeCard = ({ sale, sheet, ...props }) => {
+const AuthorizeCard = ({ sale, sheet, style, ...props }) => {
   const { markUnentered } = useSaleMethods(sale)
 
   const { run: removeOrder, loading: isRemoving } = useRequest(
@@ -24,7 +24,13 @@ const AuthorizeCard = ({ sale, sheet, ...props }) => {
   )
 
   return (
-    <Card color="yellow.700" bg="yellow.50" borderColor="yellow.200" {...props}>
+    <Card
+      color="yellow.700"
+      bg="yellow.50"
+      borderColor="yellow.200"
+      style={style}
+      {...props}
+    >
       {sale == null || sale.isEmpty ? (
         <LoadingSpinner size="md" mt={2} ml={4} />
       ) : (

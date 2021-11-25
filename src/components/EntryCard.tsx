@@ -12,9 +12,15 @@ import LoadingSpinner from "./LoadingSpinner"
 interface SaleCardProps {
   sale: Sale
   sheet: Sheet
+  style: object
 }
 
-export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
+export default function SaleCard({
+  sale,
+  sheet,
+  style,
+  ...props
+}: SaleCardProps) {
   const actions = useSaleMethods(sale)
 
   const entryDays = useMemo(
@@ -49,7 +55,7 @@ export default function SaleCard({ sale, sheet, ...props }: SaleCardProps) {
   )
 
   return (
-    <FocusCard {...props}>
+    <FocusCard style={style} {...props}>
       {(isFocused: boolean) =>
         sale == null ? (
           <LoadingSpinner size="md" mt={2} ml={4} />

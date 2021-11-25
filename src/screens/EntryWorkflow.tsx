@@ -10,11 +10,15 @@ import {
 } from "@chakra-ui/react"
 import { RouteComponentProps } from "@reach/router"
 import React, { useCallback, useContext } from "react"
+import AutoSizer from "react-virtualized-auto-sizer"
+import { VariableSizeList } from "react-window"
 
 import AuthorizeCard from "../components/AuthorizeCard"
 import EntryCard from "../components/EntryCard"
 import { withAuth } from "../services/Auth"
+import { Sale } from "../services/dear/entities"
 import { useSaleActions, useSaleList } from "../services/dear/hooks"
+import { Sheet } from "../services/sheets/api"
 import { SheetContext, useGoogleSheet } from "../services/sheets/hooks"
 import LoadingScreen from "./LoadingScreen"
 
@@ -61,15 +65,43 @@ const Header = ({ salesCount, reloadSales, location }) => {
   )
 }
 
+const getItemSize = (salesCollection: Sale[]) => (index: number) => {
+  const sale = salesCollection[index]
+  const notes = sale.notes
+  return (
+    sale.itemCount * 32 +
+    96 +
+    (notes.length === 0 ? 0 : 16 + (notes.length / 50) * 32)
+  )
+}
+
+const GUTTER_SIZE = 8
+
+const Card =
+  (
+    CardComponent: typeof AuthorizeCard | typeof EntryCard,
+    sheet: Sheet,
+    salesCollection: Sale[],
+  ) =>
+  ({ index, style }) =>
+    (
+      <CardComponent
+        key={salesCollection[index].id}
+        sheet={sheet}
+        sale={salesCollection[index]}
+        style={{
+          ...style,
+          top: style.top + GUTTER_SIZE,
+          height: style.height - GUTTER_SIZE,
+        }}
+      />
+    )
+
 function EntryWorkflow({ location }: RouteComponentProps) {
   const sheet = useContext(SheetContext)
 
-  const {
-    reloadSales,
-    salesCount,
-    salesToAuthorize,
-    salesToEnter,
-  } = useSaleList(sheet)
+  const { reloadSales, salesCount, salesToAuthorize, salesToEnter } =
+    useSaleList(sheet)
 
   const { markAuthorized } = useSaleActions()
   const clearAuthorized = useCallback(
@@ -82,18 +114,21 @@ function EntryWorkflow({ location }: RouteComponentProps) {
   ) : salesCount.total === null ? (
     <LoadingScreen message="Loading orders..." />
   ) : (
-    <Stack flexDirection="column" spacing={8}>
+    <Stack flexDirection="column" spacing={8} h="100vh">
       <Header
         salesCount={salesCount}
         reloadSales={reloadSales}
         location={location}
       />
       <Flex
+        flex={1}
         flexDirection={["column", "column", "row"]}
         alignItems={["center", "center", "flex-start"]}
       >
-        <Box
-          width={["100%", 4 / 5, 1 / 2]}
+        <Flex
+          flexDirection="column"
+          width={["100%", "80%", "50%"]}
+          height="100%"
           ml={["auto", "auto", 0]}
           mr={["auto", "auto", 4]}
           mt={[16, 16, 0]}
@@ -101,15 +136,24 @@ function EntryWorkflow({ location }: RouteComponentProps) {
           <Heading color="yellow.800" mb={4}>
             To Enter
           </Heading>
-          {salesToEnter.map((sale) => (
-            <EntryCard key={sale.id} sheet={sheet} sale={sale} />
-          ))}
-        </Box>
+          <AutoSizer>
+            {({ width, height }) => (
+              <VariableSizeList
+                height={height}
+                width={width}
+                itemCount={salesToEnter.length}
+                itemSize={getItemSize(salesToEnter)}
+                children={Card(EntryCard, sheet, salesToEnter)}
+              />
+            )}
+          </AutoSizer>
+        </Flex>
         <Box
+          height="100%"
           ml={["auto", "auto", 4]}
           mr={["auto", "auto", 0]}
           order={[-1, -1, 1]}
-          width={["100%", 4 / 5, 1 / 2]}
+          width={["100%", "80%", "50%"]}
         >
           {salesToAuthorize.length > 0 && (
             <>
@@ -125,9 +169,17 @@ function EntryWorkflow({ location }: RouteComponentProps) {
                   ml="auto"
                 />
               </Flex>
-              {salesToAuthorize.map((sale) => (
-                <AuthorizeCard key={sale.id} sheet={sheet} sale={sale} />
-              ))}
+              {/* <AutoSizer>
+                {({ width, height }) => (
+                  <VariableSizeList
+                    height={height}
+                    width={width}
+                    itemCount={salesToAuthorize.length}
+                    itemSize={getItemSize(salesToAuthorize)}
+                    children={Card(AuthorizeCard, sheet, salesToAuthorize)}
+                  />
+                )}
+              </AutoSizer> */}
             </>
           )}
         </Box>
