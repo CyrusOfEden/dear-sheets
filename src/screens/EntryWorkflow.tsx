@@ -9,7 +9,7 @@ import {
   Text,
 } from "@chakra-ui/react"
 import { RouteComponentProps } from "@reach/router"
-import React, { useCallback, useContext } from "react"
+import React, { useCallback, useContext, useEffect, useRef } from "react"
 import AutoSizer from "react-virtualized-auto-sizer"
 import { VariableSizeList } from "react-window"
 
@@ -65,14 +65,27 @@ const Header = ({ salesCount, reloadSales, location }) => {
   )
 }
 
-const getItemSize = (salesCollection: Sale[]) => (index: number) => {
-  const sale = salesCollection[index]
-  const notes = sale.notes
-  return (
-    sale.itemCount * 32 +
-    96 +
-    (notes.length === 0 ? 0 : 16 + (notes.length / 50) * 32)
-  )
+const getItemSize = (sales: Sale[]) => (index: number) => {
+  const notes = sales[index].notes
+  return 96 + (notes.length === 0 ? 0 : 24 + (notes.length / 50) * 32)
+}
+
+const getEntryCardSize = (sales: Sale[]) => {
+  const getBaseSize = getItemSize(sales)
+  return (index: number) => getBaseSize(index) + sales[index].itemCount * 32
+}
+
+const getAuthorizeCardSize = (sales: Sale[]) => {
+  const getBaseSize = getItemSize(sales)
+  return (index: number) => {
+    const unenteredItems = (sales[index] as any).skipped?.length ?? 0
+    const enteredItems = sales[index].itemCount - unenteredItems
+    return (
+      getBaseSize(index) +
+      (enteredItems === 0 ? 0 : enteredItems * 32 + 24) +
+      (unenteredItems === 0 ? 0 : unenteredItems * 32 + 24)
+    )
+  }
 }
 
 const GUTTER_SIZE = 8
@@ -86,7 +99,7 @@ const Card =
   ({ index, style }) =>
     (
       <CardComponent
-        key={salesCollection[index].id}
+        key={index}
         sheet={sheet}
         sale={salesCollection[index]}
         style={{
@@ -97,24 +110,29 @@ const Card =
       />
     )
 
+const useResetCache = (scalar) => {
+  const ref = useRef(null)
+  useEffect(() => {
+    ref.current?.resetAfterIndex(0)
+  }, [scalar])
+  return ref
+}
+
 function EntryWorkflow({ location }: RouteComponentProps) {
   const sheet = useContext(SheetContext)
 
   const { reloadSales, salesCount, salesToAuthorize, salesToEnter } =
     useSaleList(sheet)
 
-  const { markAuthorized } = useSaleActions()
-  const clearAuthorized = useCallback(
-    (_: React.MouseEvent) => salesToAuthorize.forEach(markAuthorized),
-    [salesToAuthorize, markAuthorized],
-  )
+  const enterRef = useResetCache(salesToEnter.length)
+  const authorizeRef = useResetCache(salesToAuthorize.length)
 
   return sheet === null ? (
     <LoadingScreen message="Opening spreadsheet..." />
   ) : salesCount.total === null ? (
     <LoadingScreen message="Loading orders..." />
   ) : (
-    <Stack flexDirection="column" spacing={8} h="100vh">
+    <Stack flexDirection="column" spacing={4} h="100vh">
       <Header
         salesCount={salesCount}
         reloadSales={reloadSales}
@@ -133,16 +151,14 @@ function EntryWorkflow({ location }: RouteComponentProps) {
           mr={["auto", "auto", 4]}
           mt={[16, 16, 0]}
         >
-          <Heading color="yellow.800" mb={4}>
-            To Enter
-          </Heading>
           <AutoSizer>
             {({ width, height }) => (
               <VariableSizeList
+                ref={enterRef}
                 height={height}
                 width={width}
                 itemCount={salesToEnter.length}
-                itemSize={getItemSize(salesToEnter)}
+                itemSize={getEntryCardSize(salesToEnter)}
                 children={Card(EntryCard, sheet, salesToEnter)}
               />
             )}
@@ -156,31 +172,18 @@ function EntryWorkflow({ location }: RouteComponentProps) {
           width={["100%", "80%", "50%"]}
         >
           {salesToAuthorize.length > 0 && (
-            <>
-              <Flex flexDirection="row" alignItems="center">
-                <Heading color="yellow.800">To Authorize</Heading>
-                <IconButton
-                  aria-label="Mark all entered orders as authorized"
-                  icon={<CheckIcon />}
-                  onClick={clearAuthorized}
-                  variant="outline"
-                  colorScheme="purple"
-                  size="md"
-                  ml="auto"
+            <AutoSizer>
+              {({ width, height }) => (
+                <VariableSizeList
+                  ref={authorizeRef}
+                  height={height}
+                  width={width}
+                  itemCount={salesToAuthorize.length}
+                  itemSize={getAuthorizeCardSize(salesToAuthorize)}
+                  children={Card(AuthorizeCard, sheet, salesToAuthorize)}
                 />
-              </Flex>
-              {/* <AutoSizer>
-                {({ width, height }) => (
-                  <VariableSizeList
-                    height={height}
-                    width={width}
-                    itemCount={salesToAuthorize.length}
-                    itemSize={getItemSize(salesToAuthorize)}
-                    children={Card(AuthorizeCard, sheet, salesToAuthorize)}
-                  />
-                )}
-              </AutoSizer> */}
-            </>
+              )}
+            </AutoSizer>
           )}
         </Box>
       </Flex>

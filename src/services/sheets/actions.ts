@@ -2,6 +2,7 @@ import * as Dear from "../dear/entities"
 import { ProductType, ProductTypes, Sheet } from "./api"
 import {
   addRowFinder,
+  columnToIndex,
   emptyRow,
   removeRowFinder,
   saleItemsAsRowsGroupedByProductType,
@@ -71,6 +72,7 @@ const sheetProductTypes = (sheet: ActionContext["sheet"]) =>
 export const addToDaySheet = async (context: ActionContext) => {
   const findEntryRow = await addRowFinder(context)
   const { sale, weekDay, sheet } = context
+  const { config } = sheet
 
   const invoiceCode = sale.invoice.number.toString()
   const accountName = sale.customer.name
@@ -82,7 +84,7 @@ export const addToDaySheet = async (context: ActionContext) => {
     values[0] = invoiceCode
     values[1] = accountName
     await sheet.updateRows(
-      `${weekDay}!A${rowNumber}:${sheet.config.maxColumn}${rowNumber}`,
+      `${weekDay}!A${rowNumber}:${config.maxColumn}${rowNumber}`,
       values,
     )
     return true
@@ -100,20 +102,21 @@ export const addToDaySheet = async (context: ActionContext) => {
 export const removeFromDaySheet = async (context: ActionContext) => {
   const findEntryRow = await removeRowFinder(context)
   const { weekDay, sheet } = context
+  const { config } = sheet
 
   const clearRow = async (rowNumber: number) => {
     if (rowNumber === -1) {
       return false
     }
     await sheet.updateRows(
-      `${weekDay}!A${rowNumber}:${sheet.config.maxColumn}${rowNumber}`,
-      emptyRow(sheet.config.rowLength),
+      `${weekDay}!A${rowNumber}:${config.maxColumn}${rowNumber}`,
+      emptyRow(columnToIndex(config.maxColumn)),
     )
     return true
   }
 
   const clearRowOfProductsOfType = (type: ProductType) =>
-    clearRow(findEntryRow(sheet.config[type]))
+    clearRow(findEntryRow(config[type]))
 
   await Promise.all(sheetProductTypes(sheet).map(clearRowOfProductsOfType))
 

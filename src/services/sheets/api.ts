@@ -91,7 +91,6 @@ export type EntryConfig = {
 }
 
 export class Config {
-  rowLength: number
   maxColumn: string
   bulk?: EntryConfig
   entry?: EntryConfig
@@ -116,10 +115,7 @@ const parseConfig = (values: string[][]): Config => {
 
   {
     const columnIndices = coffeeColumns.map(columnToIndex).filter((n) => n > 0)
-    const maxIndex = Math.max(...columnIndices)
-    const minIndex = Math.min(...columnIndices)
-    config.rowLength = maxIndex - minIndex
-    config.maxColumn = indexToColumn(maxIndex + 1)
+    config.maxColumn = indexToColumn(Math.max(...columnIndices) + 1)
   }
 
   {

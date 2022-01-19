@@ -35,11 +35,12 @@ export const saleItemsAsRowsGroupedByProductType = ({
   sale,
   sheet,
 }: ActionContext) => {
+  const rowLength = columnToIndex(sheet.config.maxColumn)
   const items: Record<ProductType, RowValues> = {
-    bulk: emptyRow(sheet.config.rowLength),
-    oneKilo: emptyRow(sheet.config.rowLength),
-    retail: emptyRow(sheet.config.rowLength),
-    sample: emptyRow(sheet.config.rowLength),
+    bulk: emptyRow(rowLength),
+    oneKilo: emptyRow(rowLength),
+    retail: emptyRow(rowLength),
+    sample: emptyRow(rowLength),
   }
 
   for (const item of sale.items) {
