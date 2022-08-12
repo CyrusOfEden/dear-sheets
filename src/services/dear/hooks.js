@@ -8,7 +8,7 @@ import { SheetContext } from "../sheets/hooks"
 import * as Dear from "./entities"
 
 const loadUnfulfilledSaleIDs = async () => {
-  const { data } = await axios.get("https://enn26jnkmnnsctl.m.pipedream.net")
+  const { data } = await axios.get("https://eoc0uya6mlzz2wc.m.pipedream.net")
   return data.saleIDs || []
 }
 
@@ -101,8 +101,9 @@ export const useSaleList = (sheet) => {
   }, [firebase, ids, isComplete, setComplete, sheet])
 
   const reloadSales = useCallback(async () => {
-    const warning = "This will reset all progress you've made. Are you sure?"
-    if (window.confirm(warning)) {
+    if (
+      window.confirm("This will reset all progress you've made. Are you sure?")
+    ) {
       await firebase.remove(sheet.firebasePath("sales/"))
       setIds([])
       setComplete(null)

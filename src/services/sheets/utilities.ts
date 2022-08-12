@@ -6,7 +6,7 @@ interface EntryId {
   accountName: string
 }
 
-type RowFinderPredicate = (context: ActionContext, entry: EntryId) => boolean
+type RowFinderPredicate = (_context: ActionContext, _entry: EntryId) => boolean
 type RowValues = string[] & { hasEntries: boolean }
 
 export const emptyRow = (size: number): RowValues =>

@@ -5,11 +5,10 @@ import React, { useCallback, useEffect, useMemo, useState } from "react"
 
 import { useAuth, useGoogleLogin } from "../services/Auth"
 
-const weeknames = "Sunday Monday Tuesday Wednesday Thursday Friday Saturday".split(
-  " ",
-)
+const weeknames =
+  "Sunday Monday Tuesday Wednesday Thursday Friday Saturday".split(" ")
 
-const Login = ({ navigate }: RouteComponentProps) => {
+const Login: React.FC<RouteComponentProps> = ({ navigate }) => {
   const [isLoading, setLoading] = useState(false)
   const [loadingText, setLoadingText] = useState("")
   const [, isAuthorized] = useAuth()

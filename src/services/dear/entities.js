@@ -9,7 +9,7 @@ const rateLimiter = new PromiseThrottler({
 
 const rpc = (data) =>
   rateLimiter.add(() =>
-    axios.post("https://en1b7j297hdg82f.m.pipedream.net", data),
+    axios.post("https://eo2zqabi5tcsv50.m.pipedream.net", data),
   )
 
 class APIResponseWrapper {

@@ -1,15 +1,6 @@
-import { CheckIcon, RepeatClockIcon } from "@chakra-ui/icons"
-import {
-  Box,
-  Flex,
-  Heading,
-  IconButton,
-  Progress,
-  Stack,
-  Text,
-} from "@chakra-ui/react"
-import { RouteComponentProps } from "@reach/router"
-import React, { useCallback, useContext, useEffect, useRef } from "react"
+import { RepeatClockIcon } from "@chakra-ui/icons"
+import { Box, Flex, IconButton, Progress, Stack, Text } from "@chakra-ui/react"
+import React, { useContext, useEffect, useRef } from "react"
 import AutoSizer from "react-virtualized-auto-sizer"
 import { VariableSizeList } from "react-window"
 
@@ -17,12 +8,81 @@ import AuthorizeCard from "../components/AuthorizeCard"
 import EntryCard from "../components/EntryCard"
 import { withAuth } from "../services/Auth"
 import { Sale } from "../services/dear/entities"
-import { useSaleActions, useSaleList } from "../services/dear/hooks"
+import { useSaleList } from "../services/dear/hooks"
 import { Sheet } from "../services/sheets/api"
 import { SheetContext, useGoogleSheet } from "../services/sheets/hooks"
 import LoadingScreen from "./LoadingScreen"
 
-const Header = ({ salesCount, reloadSales, location }) => {
+const Screen: React.FC = () => {
+  const sheet = useContext(SheetContext)
+
+  const { reloadSales, salesCount, salesToAuthorize, salesToEnter } =
+    useSaleList(sheet)
+
+  const enterRef = useResetCache(salesToEnter.length)
+  const authorizeRef = useResetCache(salesToAuthorize.length)
+
+  return sheet === null ? (
+    <LoadingScreen message="Opening spreadsheet..." />
+  ) : salesCount.total === null ? (
+    <LoadingScreen message="Loading orders..." />
+  ) : (
+    <Stack flexDirection="column" spacing={4} h="100vh">
+      <Header salesCount={salesCount} reloadSales={reloadSales} />
+      <Flex
+        flex={1}
+        flexDirection={["column", "column", "row"]}
+        alignItems={["center", "center", "flex-start"]}
+      >
+        <Flex
+          flexDirection="column"
+          width={["100%", "80%", "50%"]}
+          height="100%"
+          ml={["auto", "auto", 0]}
+          mr={["auto", "auto", 4]}
+          mt={[16, 16, 0]}
+        >
+          <AutoSizer>
+            {({ width, height }) => (
+              <VariableSizeList
+                ref={enterRef}
+                height={height}
+                width={width}
+                itemCount={salesToEnter.length}
+                itemSize={getEntryCardSize(salesToEnter)}
+                children={Card(EntryCard, sheet, salesToEnter)}
+              />
+            )}
+          </AutoSizer>
+        </Flex>
+        <Box
+          height="100%"
+          ml={["auto", "auto", 4]}
+          mr={["auto", "auto", 0]}
+          order={[-1, -1, 1]}
+          width={["100%", "80%", "50%"]}
+        >
+          {salesToAuthorize.length > 0 && (
+            <AutoSizer>
+              {({ width, height }) => (
+                <VariableSizeList
+                  ref={authorizeRef}
+                  height={height}
+                  width={width}
+                  itemCount={salesToAuthorize.length}
+                  itemSize={getAuthorizeCardSize(salesToAuthorize)}
+                  children={Card(AuthorizeCard, sheet, salesToAuthorize)}
+                />
+              )}
+            </AutoSizer>
+          )}
+        </Box>
+      </Flex>
+    </Stack>
+  )
+}
+
+const Header = ({ salesCount, reloadSales }) => {
   const progress = Math.ceil((salesCount.loaded / salesCount.total) * 100)
   const isLoading = salesCount.total > 0 && salesCount.loaded < salesCount.total
 
@@ -49,11 +109,14 @@ const Header = ({ salesCount, reloadSales, location }) => {
         <IconButton
           aria-label="Sync"
           icon={<RepeatClockIcon />}
-          onClick={() =>
-            reloadSales()
-              .then(() => (window.location.pathname = location.pathname))
-              .catch(() => {})
-          }
+          onClick={async () => {
+            try {
+              await reloadSales()
+              window.location.reload()
+            } catch (error) {
+              window.alert(error)
+            }
+          }}
           py={1}
           variant="link"
           colorScheme="yellow"
@@ -110,7 +173,7 @@ const Card =
       />
     )
 
-const useResetCache = (scalar) => {
+const useResetCache = (scalar: unknown) => {
   const ref = useRef(null)
   useEffect(() => {
     ref.current?.resetAfterIndex(0)
@@ -118,89 +181,16 @@ const useResetCache = (scalar) => {
   return ref
 }
 
-function EntryWorkflow({ location }: RouteComponentProps) {
-  const sheet = useContext(SheetContext)
-
-  const { reloadSales, salesCount, salesToAuthorize, salesToEnter } =
-    useSaleList(sheet)
-
-  const enterRef = useResetCache(salesToEnter.length)
-  const authorizeRef = useResetCache(salesToAuthorize.length)
-
-  return sheet === null ? (
-    <LoadingScreen message="Opening spreadsheet..." />
-  ) : salesCount.total === null ? (
-    <LoadingScreen message="Loading orders..." />
-  ) : (
-    <Stack flexDirection="column" spacing={4} h="100vh">
-      <Header
-        salesCount={salesCount}
-        reloadSales={reloadSales}
-        location={location}
-      />
-      <Flex
-        flex={1}
-        flexDirection={["column", "column", "row"]}
-        alignItems={["center", "center", "flex-start"]}
-      >
-        <Flex
-          flexDirection="column"
-          width={["100%", "80%", "50%"]}
-          height="100%"
-          ml={["auto", "auto", 0]}
-          mr={["auto", "auto", 4]}
-          mt={[16, 16, 0]}
-        >
-          <AutoSizer>
-            {({ width, height }) => (
-              <VariableSizeList
-                ref={enterRef}
-                height={height}
-                width={width}
-                itemCount={salesToEnter.length}
-                itemSize={getEntryCardSize(salesToEnter)}
-                children={Card(EntryCard, sheet, salesToEnter)}
-              />
-            )}
-          </AutoSizer>
-        </Flex>
-        <Box
-          height="100%"
-          ml={["auto", "auto", 4]}
-          mr={["auto", "auto", 0]}
-          order={[-1, -1, 1]}
-          width={["100%", "80%", "50%"]}
-        >
-          {salesToAuthorize.length > 0 && (
-            <AutoSizer>
-              {({ width, height }) => (
-                <VariableSizeList
-                  ref={authorizeRef}
-                  height={height}
-                  width={width}
-                  itemCount={salesToAuthorize.length}
-                  itemSize={getAuthorizeCardSize(salesToAuthorize)}
-                  children={Card(AuthorizeCard, sheet, salesToAuthorize)}
-                />
-              )}
-            </AutoSizer>
-          )}
-        </Box>
-      </Flex>
-    </Stack>
-  )
-}
-
-export default withAuth(function Workflow({
-  spreadsheet,
-  ...props
-}: RouteComponentProps<{ spreadsheet: string }>) {
+const EntryWorkflow: React.FC<{ spreadsheet: string }> = ({ spreadsheet }) => {
   const sheet = useGoogleSheet(spreadsheet)
+
   return (
     sheet && (
       <SheetContext.Provider value={sheet}>
-        <EntryWorkflow {...props} />
+        <Screen />
       </SheetContext.Provider>
     )
   )
-})
+}
+
+export default withAuth(EntryWorkflow)

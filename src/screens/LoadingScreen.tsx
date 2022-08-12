@@ -21,6 +21,7 @@ const LoadingScreen: React.FC<{ message: string }> = ({ message }) => {
       ]),
     [],
   )
+
   return (
     <Stack
       direction="column"

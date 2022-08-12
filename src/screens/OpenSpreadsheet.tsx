@@ -5,7 +5,7 @@ import React, { useCallback, useRef, useState } from "react"
 
 import { withAuth } from "../services/Auth"
 
-const OpenSpreadsheet = ({ navigate }: RouteComponentProps) => {
+const OpenSpreadsheet: React.FC<RouteComponentProps> = ({ navigate }) => {
   const url = useRef<HTMLInputElement>(null)
 
   const [error, setError] = useState(false)
@@ -13,16 +13,17 @@ const OpenSpreadsheet = ({ navigate }: RouteComponentProps) => {
 
   const openSpreadsheet = useCallback(
     (event) => {
+      event.preventDefault()
+      setError(false)
+      setLoading(true)
+
       try {
-        setLoading(true)
-        event.preventDefault()
         const match = url.current.value.match(
           new RegExp("/spreadsheets/d/([a-zA-Z0-9-_]+)/"),
         )
         if (!match) {
           throw new Error("Expected a spreadsheet URL")
         }
-        setError(false)
         navigate(`/2/entry_workflow/${match[1]}`)
       } catch {
         setError(true)
